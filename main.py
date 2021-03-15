@@ -1,7 +1,6 @@
 import threading
 import tkinter
 import os
-import threading
 from tkinter.constants import *
 import player
 from pynput.keyboard import Key, Listener
