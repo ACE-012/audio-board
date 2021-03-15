@@ -80,7 +80,7 @@ class gui(threading.Thread):
         buttons.clear()
         for file in self.myfiles:
             if file[-3:]=="mp3" or file[-3:]=="wav" or file[-3:]=="ogg":
-                self.buttons.append(tkinter.Button(self.newFrame ,text = self.mytrim(file[:-4]), height=5,width=10,bd = '5',command=lambda c=file: self.play(args+"\\"+c)).grid(row=j,column=i))
+                self.buttons.append(tkinter.Button(self.newFrame ,text = self.mytrim(file[:-4]), height=6,width=12,bd = '5',command=lambda c=file: self.play(args+"\\"+c)).grid(row=j,column=i))
                 buttons.append(args+"\\"+file)
                 if i<2:
                     i+=1
