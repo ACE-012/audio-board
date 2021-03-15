@@ -49,6 +49,22 @@ class gui(threading.Thread):
                 break
     def close_window(self):
         os._exit(0)
+    def mytrim(self,filename):
+        filename=filename.replace("-"," ")
+        filename=filename.replace("_"," ")
+        temp=filename.split()
+        return_string=""
+        substractor=12
+        if len(filename)>12:
+            for word in temp:
+                if len(return_string+" "+word)<substractor:
+                    return_string=return_string+" "+word
+                elif len(return_string+" "+word)>=substractor:
+                    return_string=return_string+"\n"+word
+                    substractor+=12
+        else :
+            return_string=filename
+        return return_string 
     def myprint(self,args):
         if type(args)==list:
             args=args[0]
@@ -64,7 +80,7 @@ class gui(threading.Thread):
         buttons.clear()
         for file in self.myfiles:
             if file[-3:]=="mp3" or file[-3:]=="wav" or file[-3:]=="ogg":
-                self.buttons.append(tkinter.Button(self.newFrame ,text = file[:-4], height=5,width=10,bd = '5',command=lambda c=file: self.play(args+"\\"+c)).grid(row=j,column=i))
+                self.buttons.append(tkinter.Button(self.newFrame ,text = self.mytrim(file[:-4]), height=5,width=10,bd = '5',command=lambda c=file: self.play(args+"\\"+c)).grid(row=j,column=i))
                 buttons.append(args+"\\"+file)
                 if i<2:
                     i+=1
