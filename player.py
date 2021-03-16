@@ -15,6 +15,8 @@ class player(threading.Thread):
             self.thispygame.mixer.pre_init(devicename=device)
             self.thispygame.mixer.init()
         self.audioname=name
+    def exit(self):
+        self.thispygame.mixer.quit()
     def run(self):
         if self.audioname!="none":
             self.thispygame.mixer.music.load(self.audioname)

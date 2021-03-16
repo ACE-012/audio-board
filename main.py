@@ -75,7 +75,7 @@ class gui(threading.Thread):
         self.newFrame.pack(anchor=CENTER)
         self.buttons=[]
         i=0
-        j=0
+        j=3
         buttons.clear()
         for file in self.myfiles:
             if file[-3:]=="mp3" or file[-3:]=="wav" or file[-3:]=="ogg":
@@ -85,12 +85,13 @@ class gui(threading.Thread):
                     i+=1
                 else:
                     i=0
-                    j+=1
-                if j>=3:
+                    j-=1
+                if j<=0:
                     break
     def run(self):
         pass
     def play(self,dir_name):
+        global playerthread
         playerthread=player.player(dir_name,"CABLE Input (VB-Audio Virtual Cable)")
         playerthread.start()
 
@@ -99,9 +100,12 @@ class mylistner(threading.Thread):
         super().__init__()
     def on_press(self,key):
         if hasattr(key, 'vk') and 96 <= key.vk <= 105:
+            global playerthread
             if key.vk-97<len(buttons) and key.vk-97!=-1:
                 playerthread=player.player(buttons[key.vk-97],"CABLE Input (VB-Audio Virtual Cable)")
                 playerthread.start()
+            if key.vk-96==0:
+                playerthread.exit()
         # if type(key)==Key:
         #     if key==key.num_lock:
         #         os._exit(0)
