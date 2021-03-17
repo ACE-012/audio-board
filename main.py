@@ -3,6 +3,7 @@ import tkinter
 import os
 from tkinter.constants import *
 import player
+from time import *
 from pynput.keyboard import Key, Listener
 playerthread=player.player("none","none")
 buttons=[]
@@ -92,6 +93,8 @@ class gui(threading.Thread):
         pass
     def play(self,dir_name):
         global playerthread
+        if playerthread.is_alive():
+            playerthread.exit()
         playerthread=player.player(dir_name,"CABLE Input (VB-Audio Virtual Cable)")
         playerthread.start()
 
@@ -99,20 +102,33 @@ class mylistner(threading.Thread):
     def __init__(self):
         super().__init__()
     def on_press(self,key):
-        if hasattr(key, 'vk') and 96 <= key.vk <= 105:
-            global playerthread
-            if key.vk-97<len(buttons) and key.vk-97!=-1:
-                playerthread=player.player(buttons[key.vk-97],"CABLE Input (VB-Audio Virtual Cable)")
-                playerthread.start()
-            if key.vk-96==0:
-                playerthread.exit()
+            if hasattr(key, 'vk') and 96 <= key.vk <= 105:
+                global playerthread
+                if key.vk-97<len(buttons) and key.vk-97!=-1:
+                    if playerthread.is_alive():
+                        playerthread.exit()
+                    playerthread=player.player(buttons[key.vk-97],"CABLE Input (VB-Audio Virtual Cable)")
+                    playerthread.start()
+                if key.vk-96==0:
+                    playerthread.exit()
         # if type(key)==Key:
         #     if key==key.num_lock:
         #         os._exit(0)
     def run(self):
         with Listener(on_press=self.on_press) as listener:
             listener.join()
-mylistner1=mylistner()
-mylistner1.start()
+class main(threading.Thread):
+    def __init__(self):
+        super().__init__()
+        self.mylistner1=mylistner()
+        self.mylistner1.start()
+    def run(self):
+        if self.mylistner1.is_alive()==False:
+            self.mylistner1=mylistner()
+            self.mylistner1.start()
+        sleep(1)
+        self.run()
+mainthread=main()
+mainthread.start()
 threadgui=gui()
 threadgui.start()
