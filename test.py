@@ -1,2 +1,3 @@
 import sounddevice
-print(sounddevice.query_devices())
+n=sounddevice.query_devices()
+print(*n,sep="\n")

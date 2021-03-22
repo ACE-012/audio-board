@@ -9,3 +9,5 @@ def write(path, value, root=HKEY_CURRENT_USER):
     path, name = os.path.split(path)
     with OpenKey(root, path, 0, KEY_WRITE) as key:
         SetValueEx(key, name, 0, REG_SZ, value)
+def create(path,root=HKEY_CURRENT_USER):
+    CreateKey(root, r'SOFTWARE\\virtual audio player')
