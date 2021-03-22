@@ -2,8 +2,6 @@ from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import time
 import pygame
-import pyglet
-import test
 import threading
 from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
@@ -13,18 +11,13 @@ class player(threading.Thread):
         super().__init__()
         self.audioname=name
         self.thispygame=pygame
-        self.thispyglet=pyglet.media.Player()
         if name!="none" or device!="none":
             self.thispygame.mixer.pre_init(devicename=device)
-            self.thispyglet.queue(pyglet.media.load(name))
         self.thispygame.mixer.init()
-        self.p = test.myplaysound(self.audioname)
-    def exit(self):
+        # self.p = test.myplaysound(self.audioname)
+    def stop(self):
         if self.audioname!="none":
-            if self.thispyglet.playing:
-                self.thispygame.mixer.quit()
-                self.thispyglet.pause()
-                self.thispyglet.delete()
+            self.thispygame.mixer.quit()
         # self.p.stop()
     def run(self):
         if self.audioname!="none":
@@ -37,10 +30,9 @@ class player(threading.Thread):
                 self.song=OggFileType(self.audioname)#not tested
             self.songLength = self.song.info.length
             self.thispygame.mixer.music.play()
-            self.thispyglet.play()
             # self.p.start()
             time.sleep(int(self.songLength))
-            self.exit()
+            self.stop()
 # thread1 = player("default\\bubble_gum.mp3","CABLE Input (VB-Audio Virtual Cable)")
 # thread1.start()
 # print("started")
