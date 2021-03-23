@@ -230,7 +230,7 @@ class gui(threading.Thread):
         if playerthread.is_alive():
             playerthread.stop()
         if playervar=="pygame":
-            playerthread=player.player(dir_name,playback_device)
+            playerthread=player.player(dir_name,playback_device,"v",True)
         else:
             playerthread=player.player(dir_name,9)
         playerthread.start()
@@ -248,7 +248,7 @@ class mylistner(threading.Thread):
                         playerthread.stop()
                     
                     if playervar=="pygame":
-                        playerthread=player.player(buttons[key.vk-97],playback_device)
+                        playerthread=player.player(buttons[key.vk-97],playback_device,"v",True)
                     else:
                         playerthread=player.player(buttons[key.vk-97],int(playback_device_id))
                     playerthread.start()
