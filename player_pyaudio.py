@@ -10,7 +10,6 @@ class player(threading.Thread):
         super().__init__()
         self.audio=audio
         self.device=deviceid
-        self.playing=True
     def check(self,audio):
         if audio[-3]!="wav":
             t=convert.convert_mp3_to_wav(audio)
@@ -36,4 +35,4 @@ class player(threading.Thread):
     def stop(self):
         sd.stop()
 if __name__=="__main__":
-    p=player("default\\hello there.mp3",5,8).start()
+    p=player("default\\hello there.mp3",9).start()

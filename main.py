@@ -7,12 +7,12 @@ from tkinter.ttk import *
 import sounddevice
 import registry_writer
 import list_of_devices
-try :
+if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     registry_writer.read(r"SOFTWARE\\virtual audio player\\player")
-except:
+else:
     registry_writer.create(r"SOFTWARE\\virtual audio player\\player")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\player","pygame")
-playervar="none"
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\player","pyaudio")
+playervar="pyaudio"
 if registry_writer.read(r"SOFTWARE\\virtual audio player\\player")=="pygame":
     import player_pygame as player
     playervar="pygame"
@@ -26,16 +26,32 @@ if playervar=="pygame":
 else :
     playerthread=player.player("none",20)
 buttons=[]
-try:
+if playervar=="pyaudio":
+    if registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")!=None:
+        playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
+        playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
+    else:
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device","none")
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device id","0")
+        playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
+        playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
+    if registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")!=None:
+        rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
+        rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
+    else:
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device","none")
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device id","0")
+        rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
+        rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
+else:
     playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
-except:
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device","none")
-    playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
-try:
     rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
-except:
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device","none")
-    rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
+    # for i in list_of_devices.playbackdevices():
+    #     if playback_device in i:
+    #         playback_device=i
+    # for i in list_of_devices.recdevices():
+    #     if rec_device in i:
+    #         rec_device=i
 class gui(threading.Thread):
 
     def __init__(self,player):
@@ -44,7 +60,6 @@ class gui(threading.Thread):
         self.Instance_root=tkinter.Tk()
         self.playbackdevices={}
         self.recdevices={}
-        self.playbackdevice=playback_device
         self.Instance_root.geometry("1280x720")
         self.Instance_root.title("GUI")
         self.Instance_root.protocol("WM_DELETE_WINDOW", self.close_window)
@@ -106,21 +121,33 @@ class gui(threading.Thread):
                        self.playbackdevices[i['name']]=j
                     else:
                         if  self.playbackdevices.get(i['name'])==None:
-                            self.playbackdevices[i['name']]=j
+                            for d in list_of_devices.playbackdevices():
+                                if i['name'] in d:
+                                    self.playbackdevices[d]=j
             else:
                 if i['hostapi']==0:
                     if not bool(self.recdevices):
                         self.recdevices[i['name']]=j
                     else:
                         if  self.recdevices.get(i['name'])==None:
-                            self.recdevices[i['name']]=j
+                            for d in list_of_devices.recdevices():
+                                if i['name'] in d:
+                                    self.recdevices[d]=j
             j+=1
         tkinter.OptionMenu(root , self.window2option_playback , *self.playbackdevices ,command=self.playback).pack()
         tkinter.OptionMenu(root , self.window2option_rec , *self.recdevices ,command=self.rec_device).pack()
     def playback(self,text):
         registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device",text)
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device id",str(self.playbackdevices[text]))
+        global playback_device,playback_device_id
+        playback_device=text
+        playback_device_id=self.playbackdevices[text]
     def rec_device(self,text):
         registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device",text)
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device id",str(self.recdevices[text]))
+        global rec_device,rec_device_id
+        rec_device=text
+        rec_device_id=self.recdevices[text]
     def dircheck(self):
         for testdir in self.mydirs:
             if testdir=="temp":
@@ -203,9 +230,9 @@ class gui(threading.Thread):
         if playerthread.is_alive():
             playerthread.stop()
         if playervar=="pygame":
-            playerthread=player.player(dir_name,self.playbackdevice)
+            playerthread=player.player(dir_name,playback_device)
         else:
-            playerthread=player.player(dir_name,self.playbackdevices[self.playbackdevices])
+            playerthread=player.player(dir_name,9)
         playerthread.start()
 
 class mylistner(threading.Thread):
@@ -218,12 +245,12 @@ class mylistner(threading.Thread):
                 global playerthread
                 if key.vk-97<len(buttons) and key.vk-97!=-1:
                     if playerthread.is_alive():
-                        playerthread.exit()
+                        playerthread.stop()
                     
                     if playervar=="pygame":
-                        playerthread=player.player(buttons[key.vk-97],"Speakers (VB-Audio Virtual Cable)")
+                        playerthread=player.player(buttons[key.vk-97],playback_device)
                     else:
-                        playerthread=player.player(buttons[key.vk-97],9)
+                        playerthread=player.player(buttons[key.vk-97],int(playback_device_id))
                     playerthread.start()
                 if key.vk-96==0:
                     playerthread.stop()

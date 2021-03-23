@@ -30,9 +30,8 @@ class player(threading.Thread):
                 self.song=OggFileType(self.audioname)#not tested
             self.songLength = self.song.info.length
             self.thispygame.mixer.music.play()
-            # self.p.start()
-            time.sleep(int(self.songLength))
-            self.stop()
+            # while self.thispygame.mixer.get_busy():
+            #     time.sleep(int(self.songLength))
 # thread1 = player("default\\bubble_gum.mp3","CABLE Input (VB-Audio Virtual Cable)")
 # thread1.start()
 # print("started")
