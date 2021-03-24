@@ -7,10 +7,14 @@ from tkinter.ttk import *
 import sounddevice
 import registry_writer
 import list_of_devices
+from time import *
+from pynput.keyboard import Key,Listener
 if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     registry_writer.read(r"SOFTWARE\\virtual audio player\\player")
+    firstrun=False
 else:
     registry_writer.create(r"SOFTWARE\\virtual audio player\\player")
+    firstrun=True
     registry_writer.write(r"SOFTWARE\\virtual audio player\\player","pyaudio")
 playervar="pyaudio"
 if registry_writer.read(r"SOFTWARE\\virtual audio player\\player")=="pygame":
@@ -19,13 +23,29 @@ if registry_writer.read(r"SOFTWARE\\virtual audio player\\player")=="pygame":
 else :
     import player_pyaudio as player
     playervar="pyaudio"
-from time import *
-from pynput.keyboard import Key, Listener
 if playervar=="pygame":
     playerthread=player.player("none","none")
 else :
     playerthread=player.player("none",20)
 buttons=[]
+foldername=None
+if registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")==None:
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device id","0")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device","None")
+    actual_playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device")
+    actual_playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")
+else:
+    actual_playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device")
+    actual_playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")
+
+if registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")==None:
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device id","0")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device","None")
+    actual_rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device")
+    actual_rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")
+else:
+    actual_rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device")
+    actual_rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")
 if playervar=="pyaudio":
     if registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")!=None:
         playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
@@ -46,17 +66,20 @@ if playervar=="pyaudio":
 else:
     playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
     rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
-    # for i in list_of_devices.playbackdevices():
-    #     if playback_device in i:
-    #         playback_device=i
-    # for i in list_of_devices.recdevices():
-    #     if rec_device in i:
-    #         rec_device=i
+    playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
+    rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
+functionkeys={}
+if registry_writer.read(r"SOFTWARE\\virtual audio player\\f1")==None:
+    for i in range(12):
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i+1),"None")
+        functionkeys["f"+str(i+1)]="None"
+else:   
+    for i in range(12):
+        functionkeys["f"+str(i+1)]=registry_writer.read(r"SOFTWARE\\virtual audio player\\f"+str(i+1))
 class gui(threading.Thread):
 
     def __init__(self,player):
         super().__init__()
-        self.selflisten=self_listner.listen()
         self.Instance_root=tkinter.Tk()
         self.playbackdevices={}
         self.recdevices={}
@@ -74,6 +97,10 @@ class gui(threading.Thread):
         self.window2option_playback.set(playback_device)
         self.window2option_rec = tkinter.StringVar()
         self.window2option_rec.set(rec_device)
+        self.window2option_actual_playback = tkinter.StringVar()
+        self.window2option_actual_playback.set(actual_playback_device)
+        self.window2option_actual_rec = tkinter.StringVar()
+        self.window2option_actual_rec.set(actual_rec_device)
         self.newFrame=tkinter.Frame(self.Instance_root)
         self.newFrame.pack()
         for root, dirs, files in os.walk(".", topdown=False):
@@ -81,17 +108,22 @@ class gui(threading.Thread):
         self.dircheck()
         for dir in self.mydirs:
             self.options.append(dir)
-        self.clicked = tkinter.StringVar()
-        self.clicked.set("default")
+        if firstrun:
+            self.folderasign()
+        global foldername
+        foldername=tkinter.StringVar()
+        foldername.set("default")
+        foldername.trace("w", lambda name, index, mode, sv=foldername: self.callback(sv))
         self.toggle_btn_text=tkinter.StringVar()
         self.toggle_btn_text.set(player)
         self.myfiles=[]
-        self.drop = tkinter.OptionMenu(self.Instance_root , self.clicked , *self.options ,command=self.myprint)
+        self.drop = tkinter.OptionMenu(self.Instance_root , foldername , *self.options)
         self.drop.pack(anchor=NW)
         self.dir=[]
-        self.myprint([self.clicked.get()])
-        self.selflisten.start()
+        self.myprint([foldername.get()])
         self.mymenu()
+        self.selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
+        self.selflisten.start()
         self.Instance_root.mainloop()
     def mymenu(self):
         self.mymenubar=tkinter.Menu(self.Instance_root)
@@ -99,7 +131,14 @@ class gui(threading.Thread):
         self.mymenubar.add_cascade(label="menu",menu=self.mymenuoptions)
         self.mymenuoptions.add_command(label="settings",command=self.settings)
         self.Instance_root.config(menu=self.mymenubar)
-
+    def folderasign(self):
+        global functionkeys
+        i=1
+        for dir in self.mydirs:
+            if i<=12 and functionkeys["f"+str(i)]=="None":
+                functionkeys["f"+str(i)]=dir
+                registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i),dir)
+            i+=1
     def settings(self):
         try:
             if self.newWindow.state() == "normal":
@@ -110,8 +149,8 @@ class gui(threading.Thread):
             self.newWindow.minsize(400,400)
             self.newWindow.geometry("400x400")
             self.toggle_button(self.newWindow)
-            self.devices(self.newWindow)
-    def devices(self,root):
+            self.devices()
+    def devices(self):
         n=sounddevice.query_devices()
         j=0
         for i in n:
@@ -134,8 +173,15 @@ class gui(threading.Thread):
                                 if i['name'] in d:
                                     self.recdevices[d]=j
             j+=1
-        tkinter.OptionMenu(root , self.window2option_playback , *self.playbackdevices ,command=self.playback).pack()
-        tkinter.OptionMenu(root , self.window2option_rec , *self.recdevices ,command=self.rec_device).pack()
+        virtualframe=tkinter.Frame(self.newWindow)
+        actualframe=tkinter.Frame(self.newWindow)
+        Label(virtualframe, text="virtual").pack()
+        tkinter.OptionMenu(virtualframe , self.window2option_playback , *self.playbackdevices ,command=self.playback).pack()
+        tkinter.OptionMenu(virtualframe , self.window2option_rec , *self.recdevices ,command=self.rec_device).pack()
+        tkinter.OptionMenu(actualframe , self.window2option_actual_playback , *self.playbackdevices ,command=self.actual_playback).pack()
+        tkinter.OptionMenu(actualframe , self.window2option_actual_rec , *self.recdevices ,command=self.actual_rec).pack()
+        virtualframe.pack(anchor=CENTER)
+        actualframe.pack(anchor=CENTER)
     def playback(self,text):
         registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device",text)
         registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device id",str(self.playbackdevices[text]))
@@ -148,6 +194,26 @@ class gui(threading.Thread):
         global rec_device,rec_device_id
         rec_device=text
         rec_device_id=self.recdevices[text]
+        # self.selflisten.running=False
+        # self.selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
+        # self.selflisten.start()
+    def actual_playback(self,text):
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device",text)
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device id",str(self.playbackdevices[text]))
+        global actual_playback_device,actual_playback_device_id
+        actual_playback_device=text
+        actual_playback_device_id=self.playbackdevices[text]
+        # self.selflisten.running=False
+        # self.selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
+        # self.selflisten.start()
+    def actual_rec(self,text):
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device",text)
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device id",str(self.recdevices[text]))
+        global actual_rec_device,actual_rec_device_id
+        actual_rec_device=text
+        actual_rec_device_id=self.recdevices[text]
+    def callback(self,sv):
+        self.myprint(sv.get())
     def dircheck(self):
         for testdir in self.mydirs:
             if testdir=="temp":
@@ -163,6 +229,18 @@ class gui(threading.Thread):
                     self.mydirs.remove(testdir)
                     self.dircheck()
                     break
+        i=1
+        for dir in self.mydirs:
+            if functionkeys["f"+str(i)]!=dir:
+                self.folderasign()
+                break
+            i+=1
+        i=1
+        for key in functionkeys.values():
+            if key not in self.mydirs:
+                functionkeys["f"+str(i)]="None"
+                registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i),"None")
+            i+=1
     def toggle_button(self,root):
         self.toggle_button_instance=tkinter.Button(root ,text=self.toggle_btn_text.get(), height=2,width=10,bd = '5',command=self.set_toggle_button)
         self.toggle_button_instance.pack()
@@ -241,25 +319,58 @@ class mylistner(threading.Thread):
         super().__init__()
 
     def on_press(self,key):
-            if hasattr(key, 'vk') and 96 <= key.vk <= 105:
-                global playerthread
-                if key.vk-97<len(buttons) and key.vk-97!=-1:
-                    if playerthread.is_alive():
-                        playerthread.stop()
-                    
-                    if playervar=="pygame":
-                        playerthread=player.player(buttons[key.vk-97],playback_device,"v",True)
-                    else:
-                        playerthread=player.player(buttons[key.vk-97],int(playback_device_id))
-                    playerthread.start()
-                if key.vk-96==0:
+        if hasattr(key, 'vk') and 96 <= key.vk <= 105:
+            global playerthread
+            if key.vk-97<len(buttons) and key.vk-97!=-1:
+                if playerthread.is_alive():
                     playerthread.stop()
-        # if type(key)==Key:
+                if playervar=="pygame":
+                    playerthread=player.player(buttons[key.vk-97],playback_device,"v",True)
+                else:
+                    playerthread=player.player(buttons[key.vk-97],int(playback_device_id))
+                playerthread.start()
+            if key.vk-96==0:
+                playerthread.stop()
+        if type(key)==Key:
+            if key==key.f1:
+                if functionkeys["f1"]!="None":
+                    foldername.set(functionkeys["f1"])
+            elif key==key.f2:
+                if functionkeys["f2"]!="None":
+                    foldername.set(functionkeys["f2"])
+            elif key==key.f3:
+                if functionkeys["f3"]!="None":
+                    foldername.set(functionkeys["f3"])
+            elif key==key.f4:
+                if functionkeys["f4"]!="None":
+                    foldername.set(functionkeys["f4"])
+            elif key==key.f5:
+                if functionkeys["f5"]!="None":
+                    foldername.set(functionkeys["f5"])
+            elif key==key.f6:
+                if functionkeys["f6"]!="None":
+                    foldername.set(functionkeys["f6"])
+            elif key==key.f7:
+                if functionkeys["f7"]!="None":
+                    foldername.set(functionkeys["f7"])
+            elif key==key.f8:
+                if functionkeys["f8"]!="None":
+                    foldername.set(functionkeys["f8"])
+            elif key==key.f9:
+                if functionkeys["f9"]!="None":
+                    foldername.set(functionkeys["f9"])
+            elif key==key.f10:
+                if functionkeys["f10"]!="None":
+                    foldername.set(functionkeys["f10"])
+            elif key==key.f11:
+                if functionkeys["f11"]!="None":
+                    foldername.set(functionkeys["f11"])
+            elif key==key.f12:
+                if functionkeys["f12"]!="None":
+                    foldername.set(functionkeys["f12"])
         #     if key==key.num_lock:
         #         os._exit(0)
-
     def run(self):
-
         with Listener(on_press=self.on_press) as listener:
             listener.join()
 class main(threading.Thread):

@@ -61,7 +61,5 @@ class listen(threading.Thread):
                            channels=args.channels, callback=callback):
                 while self.running:
                     time.sleep(0.5)
-        except KeyboardInterrupt:
-            parser.exit('')
         except Exception as e:
             parser.exit(type(e).__name__ + ': ' + str(e))

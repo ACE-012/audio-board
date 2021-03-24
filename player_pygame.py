@@ -6,10 +6,11 @@ import threading
 from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
 from mutagen.ogg import OggFileType
-from pyautogui import*
+from pynput.keyboard import Controller
 class player(threading.Thread):
     def __init__(self,name,device,key=None,pushtotalk=False):
         super().__init__()
+        print(device)
         self.audioname=name
         if name!="none" or device!="none":
             pygame.mixer.pre_init(devicename=device)
@@ -18,11 +19,11 @@ class player(threading.Thread):
         self.running=True
         if pushtotalk:
             self.pushkey=key
+            self.c=Controller()
     def stop(self):
         if self.audioname!="none":
             pygame.mixer.quit()
             self.running=False
-        # self.p.stop()
     def run(self):
         if self.audioname!="none":
             pygame.mixer.music.load(self.audioname)
@@ -34,14 +35,10 @@ class player(threading.Thread):
                 self.song=OggFileType(self.audioname)#not tested
             self.songLength = self.song.info.length
             if self.pushtotalk:
-                keyDown(self.pushkey)
+                self.c.press(self.pushkey)
             pygame.mixer.music.play()
             while self.running==True and pygame.mixer.music.get_busy()==True:
                 time.sleep(0.5)
                 pass
             if self.pushtotalk:
-                keyUp(self.pushkey)
-            #     time.sleep(int(self.songLength))
-# thread1 = player("default\\bubble_gum.mp3","CABLE Input (VB-Audio Virtual Cable)")
-# thread1.start()
-# print("started")
+                self.c.release(self.pushkey)
