@@ -1,5 +1,4 @@
 import threading
-import tkinter
 import os
 import self_listner
 from tkinter.constants import *
@@ -98,30 +97,30 @@ class gui(threading.Thread):
 
     def __init__(self,player):
         super().__init__()
-        self.Instance_root=tkinter.Tk()
+        self.Instance_root=Tk()
         self.playbackdevices={}
         self.recdevices={}
         self.Instance_root.geometry("1280x720")
         self.Instance_root.title("GUI")
         self.Instance_root.protocol("WM_DELETE_WINDOW", self.close_window)
         self.Instance_root.minsize(768,480)
-        p1 = tkinter.PhotoImage(file = 'requirements\\play.png')
+        p1 = PhotoImage(file = 'requirements\\play.png')
         self.Instance_root.iconphoto(False,p1)
         self.Instance_root.iconbitmap(default='requirements\\play.ico')
         self.options = []
         self.mydirs=[]
         self.buttons =[]
-        self.window2option_playback = tkinter.StringVar()
+        self.window2option_playback = StringVar()
         self.window2option_playback.set(playback_device)
-        self.window2option_rec = tkinter.StringVar()
+        self.window2option_rec = StringVar()
         self.window2option_rec.set(rec_device)
-        self.window2option_actual_playback = tkinter.StringVar()
+        self.window2option_actual_playback = StringVar()
         self.window2option_actual_playback.set(actual_playback_device)
-        self.window2option_actual_rec = tkinter.StringVar()
+        self.window2option_actual_rec = StringVar()
         self.window2option_actual_rec.set(actual_rec_device)
-        self.newFrame=tkinter.Frame(self.Instance_root)
+        self.newFrame=Frame(self.Instance_root)
         self.newFrame.pack()
-        self.pushtotalktext=tkinter.StringVar()
+        self.pushtotalktext=StringVar()
         self.pushtotalktext.set(pushtotalkkey)
         self.pushtotalktext.trace("w", lambda name, index, mode, sv=self.pushtotalktext: self.pushtotalkkeychange(sv))
         for root, dirs, files in os.walk(".", topdown=False):
@@ -132,16 +131,16 @@ class gui(threading.Thread):
         if firstrun:
             self.folderasign()
         global foldername
-        foldername=tkinter.StringVar()
+        foldername=StringVar()
         foldername.set("default")
         foldername.trace("w", lambda name, index, mode, sv=foldername: self.callback(sv))
-        self.toggle_btn_text=tkinter.StringVar()
+        self.toggle_btn_text=StringVar()
         self.toggle_btn_text.set(player)
         self.myfiles=[]
-        self.drop = tkinter.OptionMenu(self.Instance_root , foldername , *self.options)
+        self.drop = OptionMenu(self.Instance_root , foldername , *self.options)
         self.drop.pack(anchor=NW)
         self.dir=[]
-        self.overlayvar=tkinter.BooleanVar()
+        self.overlayvar=BooleanVar()
         self.overlayvar.set(useovarlay)
         self.myprint([foldername.get()])
         self.mymenu()
@@ -150,8 +149,8 @@ class gui(threading.Thread):
             self.mycreateoverlay()
         self.Instance_root.mainloop()
     def mymenu(self):
-        self.mymenubar=tkinter.Menu(self.Instance_root)
-        self.mymenuoptions=tkinter.Menu(self.mymenubar)
+        self.mymenubar=Menu(self.Instance_root)
+        self.mymenuoptions=Menu(self.mymenubar)
         self.mymenubar.add_cascade(label="menu",menu=self.mymenuoptions)
         self.mymenuoptions.add_command(label="settings",command=self.settings)
         self.Instance_root.config(menu=self.mymenubar)
@@ -177,7 +176,7 @@ class gui(threading.Thread):
             if self.newWindow.state() == "normal":
                 self.newWindow.focus()
         except:
-            self.newWindow = tkinter.Toplevel(self.Instance_root) 
+            self.newWindow = Toplevel(self.Instance_root) 
             self.newWindow.title("Settings")
             self.newWindow.minsize(400,400)
             self.newWindow.geometry("400x400")
@@ -195,7 +194,7 @@ class gui(threading.Thread):
             if self.overlaywindow.state() == "normal":
                 self.overlaywindow.focus()
         except:
-            self.overlaywindow = tkinter.Toplevel(self.Instance_root)
+            self.overlaywindow = Toplevel(self.Instance_root)
             self.overlaywindow.attributes("-fullscreen", True)
             self.overlaywindow.attributes("-transparentcolor", "red")
             f=Frame(self.overlaywindow,width=self.Instance_root.winfo_screenwidth(),bg="red",borderwidth=10)
@@ -231,16 +230,16 @@ class gui(threading.Thread):
                                 if i['name'] in d:
                                     self.recdevices[d]=j
             j+=1
-        virtualframe=tkinter.Frame(self.newWindow)
-        actualframe=tkinter.Frame(self.newWindow)
+        virtualframe=Frame(self.newWindow)
+        actualframe=Frame(self.newWindow)
         Label(virtualframe, text="virtual").pack()
         Label(actualframe, text="actual").pack()
-        text=tkinter.Entry(self.newWindow ,textvariable=self.pushtotalktext)
+        text=Entry(self.newWindow ,textvariable=self.pushtotalktext)
         text.pack()
-        tkinter.OptionMenu(virtualframe , self.window2option_playback , *self.playbackdevices ,command=self.playback).pack()
-        tkinter.OptionMenu(virtualframe , self.window2option_rec , *self.recdevices ,command=self.rec_device).pack()
-        tkinter.OptionMenu(actualframe , self.window2option_actual_playback , *self.playbackdevices ,command=self.actual_playback).pack()
-        tkinter.OptionMenu(actualframe , self.window2option_actual_rec , *self.recdevices ,command=self.actual_rec).pack()
+        OptionMenu(virtualframe , self.window2option_playback , *self.playbackdevices ,command=self.playback).pack()
+        OptionMenu(virtualframe , self.window2option_rec , *self.recdevices ,command=self.rec_device).pack()
+        OptionMenu(actualframe , self.window2option_actual_playback , *self.playbackdevices ,command=self.actual_playback).pack()
+        OptionMenu(actualframe , self.window2option_actual_rec , *self.recdevices ,command=self.actual_rec).pack()
         virtualframe.pack(anchor=CENTER)
         actualframe.pack(anchor=CENTER)
     def playback(self,text):
@@ -303,7 +302,7 @@ class gui(threading.Thread):
                 registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i),"None")
             i+=1
     def toggle_button(self,root):
-        self.toggle_button_instance=tkinter.Button(root ,text=self.toggle_btn_text.get(), height=2,width=10,bd = '5',command=self.set_toggle_button)
+        self.toggle_button_instance=Button(root ,text=self.toggle_btn_text.get(), height=2,width=10,bd = '5',command=self.set_toggle_button)
         self.toggle_button_instance.pack()
 
     def set_toggle_button(self):
@@ -343,7 +342,7 @@ class gui(threading.Thread):
         for root, dirs, files in os.walk(args, topdown=False):
             self.myfiles=files
         self.newFrame.destroy()
-        self.newFrame=tkinter.Frame(self.Instance_root)
+        self.newFrame=Frame(self.Instance_root)
         self.newFrame.pack(anchor=CENTER)
         self.buttons=[]
         i=0
@@ -351,7 +350,7 @@ class gui(threading.Thread):
         buttons.clear()
         for file in self.myfiles:
             if file[-3:]=="mp3" or file[-3:]=="wav" or file[-3:]=="ogg":
-                self.buttons.append(tkinter.Button(self.newFrame ,text = self.mytrim(file[:-4]), height=6,width=12,bd = '5',command=lambda c=file: self.play(args+"\\"+c)).grid(row=j,column=i))
+                self.buttons.append(Button(self.newFrame ,text = self.mytrim(file[:-4]), height=6,width=12,bd = '5',command=lambda c=file: self.play(args+"\\"+c)).grid(row=j,column=i))
                 buttons.append(args+"\\"+file)
                 if i<2:
                     i+=1

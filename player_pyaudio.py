@@ -29,7 +29,9 @@ class player(threading.Thread):
             else:
                 t.start()
                 self.audio=t.dst
-                time.sleep(2)
+                while t.is_alive():
+                    time.sleep(0.5)
+                    pass
     def run(self):
         self.check(self.audio)
         self.audio_play(self.audio,self.device)
