@@ -203,7 +203,6 @@ class gui(threading.Thread):
             l=Label(f, textvariable=foldername)
             l.pack(anchor=NW)
             self.overlaywindow.wm_attributes("-topmost", True)
-            
     def destroyoverlay(self):
         try:
             self.overlaywindow.destroy()
