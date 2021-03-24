@@ -78,6 +78,16 @@ if registry_writer.read(r"SOFTWARE\\virtual audio player\\f1")==None:
 else:   
     for i in range(12):
         functionkeys["f"+str(i+1)]=registry_writer.read(r"SOFTWARE\\virtual audio player\\f"+str(i+1))
+if registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")==None:
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\push to talk key","None")
+        pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
+else:
+    pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
+if len(pushtotalkkey)>1 or len(pushtotalkkey)<1:
+    pushtotalk=False
+else :
+    pushtotalk=True
+
 selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
 actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
 class gui(threading.Thread):
@@ -107,6 +117,9 @@ class gui(threading.Thread):
         self.window2option_actual_rec.set(actual_rec_device)
         self.newFrame=tkinter.Frame(self.Instance_root)
         self.newFrame.pack()
+        self.pushtotalktext=tkinter.StringVar()
+        self.pushtotalktext.set(pushtotalkkey)
+        self.pushtotalktext.trace("w", lambda name, index, mode, sv=self.pushtotalktext: self.pushtotalkkeychange(sv))
         for root, dirs, files in os.walk(".", topdown=False):
             self.mydirs=dirs
         self.dircheck()
@@ -142,6 +155,15 @@ class gui(threading.Thread):
                 functionkeys["f"+str(i)]=dir
                 registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i),dir)
             i+=1
+    def pushtotalkkeychange(self,textvar):
+        global pushtotalkkey,pushtotalk
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\push to talk key",str(textvar.get()).lower())
+        pushtotalkkey=str(textvar.get()).lower()
+        self.pushtotalktext.set(str(textvar.get()).lower())
+        if len(pushtotalkkey)>1 or len(pushtotalkkey)<1:
+            pushtotalk=False
+        else :
+            pushtotalk=True
     def settings(self):
         try:
             if self.newWindow.state() == "normal":
@@ -179,6 +201,9 @@ class gui(threading.Thread):
         virtualframe=tkinter.Frame(self.newWindow)
         actualframe=tkinter.Frame(self.newWindow)
         Label(virtualframe, text="virtual").pack()
+        Label(actualframe, text="actual").pack()
+        text=tkinter.Entry(self.newWindow ,textvariable=self.pushtotalktext)
+        text.pack()
         tkinter.OptionMenu(virtualframe , self.window2option_playback , *self.playbackdevices ,command=self.playback).pack()
         tkinter.OptionMenu(virtualframe , self.window2option_rec , *self.recdevices ,command=self.rec_device).pack()
         tkinter.OptionMenu(actualframe , self.window2option_actual_playback , *self.playbackdevices ,command=self.actual_playback).pack()
@@ -312,9 +337,9 @@ class gui(threading.Thread):
             if playerthread.is_alive():
                 playerthread.stop()
             if playervar=="pygame":
-                playerthread=player.player(dir_name,playback_device,"v",True)
+                playerthread=player.player(dir_name,playback_device,pushtotalkkey,pushtotalk)
             else:
-                playerthread=player.player(dir_name,9)
+                playerthread=player.player(dir_name,9,pushtotalkkey,pushtotalk)
             playerthread.start()
 
 class mylistner(threading.Thread):
@@ -339,9 +364,9 @@ class mylistner(threading.Thread):
                     if playerthread.is_alive():
                         playerthread.stop()
                     if playervar=="pygame":
-                        playerthread=player.player(buttons[key.vk-97],playback_device,"v",True)
+                        playerthread=player.player(buttons[key.vk-97],playback_device,pushtotalkkey,pushtotalk)
                     else:
-                        playerthread=player.player(buttons[key.vk-97],int(playback_device_id),"v",True)
+                        playerthread=player.player(buttons[key.vk-97],int(playback_device_id),pushtotalkkey,pushtotalk)
                     playerthread.start()
             if key.vk-96==0:
                 playerthread.stop()

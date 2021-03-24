@@ -35,11 +35,11 @@ class player(threading.Thread):
         self.audio_play(self.audio,self.device)
     def audio_play(self,audio,deviceid):
         if self.pushtotalk:
-            self.c.press("v")
+            self.c.press(self.pushkey)
         data1, fs1 = sf.read(audio, dtype='float32')
         sd.play(data1, fs1, device=deviceid,blocking=True)
         if self.pushtotalk:
-            self.c.release("v")
+            self.c.release(self.pushkey)
         time.sleep(1)
     def stop(self):
         sd.stop()
