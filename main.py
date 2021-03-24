@@ -8,7 +8,7 @@ import registry_writer
 import list_of_devices
 import actual_mic_listner
 from time import *
-from pynput.keyboard import Key, KeyCode,Listener
+from pynput.keyboard import Key,Listener
 if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     registry_writer.read(r"SOFTWARE\\virtual audio player\\player")
     firstrun=False

@@ -5,6 +5,7 @@ import pip
 #mutagen
 #playsound
 #pygame
+#sounddevice
 def install(package):
     if hasattr(pip, 'main'):
         pip.main(['install', package])
@@ -17,3 +18,4 @@ if __name__ == '__main__':
     install('mutagen')
     install('playsound')
     install('pygame')
+    install('sounddevice')
