@@ -1,6 +1,8 @@
+import time
 from pynput.keyboard import Key,Listener
 import os
 def on_press(key):
+    print(time.time())
     print(key)
     if type(key)==Key:
         if key==key.esc:

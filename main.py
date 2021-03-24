@@ -7,8 +7,9 @@ from tkinter.ttk import *
 import sounddevice
 import registry_writer
 import list_of_devices
+import actual_mic_listner
 from time import *
-from pynput.keyboard import Key,Listener
+from pynput.keyboard import Key, KeyCode,Listener
 if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     registry_writer.read(r"SOFTWARE\\virtual audio player\\player")
     firstrun=False
@@ -29,6 +30,7 @@ else :
     playerthread=player.player("none",20)
 buttons=[]
 foldername=None
+pushtotalkpressed=False
 if registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")==None:
     registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device id","0")
     registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device","None")
@@ -76,6 +78,8 @@ if registry_writer.read(r"SOFTWARE\\virtual audio player\\f1")==None:
 else:   
     for i in range(12):
         functionkeys["f"+str(i+1)]=registry_writer.read(r"SOFTWARE\\virtual audio player\\f"+str(i+1))
+selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
+actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
 class gui(threading.Thread):
 
     def __init__(self,player):
@@ -122,8 +126,7 @@ class gui(threading.Thread):
         self.dir=[]
         self.myprint([foldername.get()])
         self.mymenu()
-        self.selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
-        self.selflisten.start()
+        selflisten.start()
         self.Instance_root.mainloop()
     def mymenu(self):
         self.mymenubar=tkinter.Menu(self.Instance_root)
@@ -185,31 +188,31 @@ class gui(threading.Thread):
     def playback(self,text):
         registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device",text)
         registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device id",str(self.playbackdevices[text]))
-        global playback_device,playback_device_id
+        global playback_device,playback_device_id,actualmiclisten
         playback_device=text
         playback_device_id=self.playbackdevices[text]
     def rec_device(self,text):
         registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device",text)
         registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device id",str(self.recdevices[text]))
-        global rec_device,rec_device_id
+        global rec_device,rec_device_id,selflisten
         rec_device=text
         rec_device_id=self.recdevices[text]
-        # self.selflisten.running=False
-        # self.selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
-        # self.selflisten.start()
+        selflisten.running=False
+        selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
+        selflisten.start()
     def actual_playback(self,text):
         registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device",text)
         registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device id",str(self.playbackdevices[text]))
-        global actual_playback_device,actual_playback_device_id
+        global actual_playback_device,actual_playback_device_id,selflisten
         actual_playback_device=text
         actual_playback_device_id=self.playbackdevices[text]
-        # self.selflisten.running=False
-        # self.selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
-        # self.selflisten.start()
+        selflisten.running=False
+        selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
+        selflisten.start()
     def actual_rec(self,text):
         registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device",text)
         registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device id",str(self.recdevices[text]))
-        global actual_rec_device,actual_rec_device_id
+        global actual_rec_device,actual_rec_device_id,actualmiclisten
         actual_rec_device=text
         actual_rec_device_id=self.recdevices[text]
     def callback(self,sv):
@@ -305,13 +308,14 @@ class gui(threading.Thread):
 
     def play(self,dir_name):
         global playerthread
-        if playerthread.is_alive():
-            playerthread.stop()
-        if playervar=="pygame":
-            playerthread=player.player(dir_name,playback_device,"v",True)
-        else:
-            playerthread=player.player(dir_name,9)
-        playerthread.start()
+        if pushtotalkpressed==False:
+            if playerthread.is_alive():
+                playerthread.stop()
+            if playervar=="pygame":
+                playerthread=player.player(dir_name,playback_device,"v",True)
+            else:
+                playerthread=player.player(dir_name,9)
+            playerthread.start()
 
 class mylistner(threading.Thread):
 
@@ -319,16 +323,26 @@ class mylistner(threading.Thread):
         super().__init__()
 
     def on_press(self,key):
+        global playerthread,actualmiclisten
+        if playerthread.is_alive()==False:
+            if actualmiclisten.is_alive()==False:
+                if hasattr(key,'char'):
+                    if key.char=='v':
+                        selflisten.running=False
+                        actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
+                        actualmiclisten.start()
+                        global pushtotalkpressed
+                        pushtotalkpressed=True
         if hasattr(key, 'vk') and 96 <= key.vk <= 105:
-            global playerthread
             if key.vk-97<len(buttons) and key.vk-97!=-1:
-                if playerthread.is_alive():
-                    playerthread.stop()
-                if playervar=="pygame":
-                    playerthread=player.player(buttons[key.vk-97],playback_device,"v",True)
-                else:
-                    playerthread=player.player(buttons[key.vk-97],int(playback_device_id))
-                playerthread.start()
+                if pushtotalkpressed==False:
+                    if playerthread.is_alive():
+                        playerthread.stop()
+                    if playervar=="pygame":
+                        playerthread=player.player(buttons[key.vk-97],playback_device,"v",True)
+                    else:
+                        playerthread=player.player(buttons[key.vk-97],int(playback_device_id),"v",True)
+                    playerthread.start()
             if key.vk-96==0:
                 playerthread.stop()
         if type(key)==Key:
@@ -370,8 +384,20 @@ class mylistner(threading.Thread):
                     foldername.set(functionkeys["f12"])
         #     if key==key.num_lock:
         #         os._exit(0)
+    def on_release(self,key):
+        global selflisten,actualmiclisten,pushtotalkpressed
+        if playerthread.is_alive()==False:
+            if hasattr(key,'char'):
+                if key.char=='v':
+                    while pushtotalkpressed==True:
+                        if selflisten.is_alive()==False:
+                            if actualmiclisten.is_alive():
+                                actualmiclisten.running=False
+                                selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
+                                selflisten.start()
+                                pushtotalkpressed=False
     def run(self):
-        with Listener(on_press=self.on_press) as listener:
+        with Listener(on_press=self.on_press,on_release=self.on_release) as listener:
             listener.join()
 class main(threading.Thread):
 

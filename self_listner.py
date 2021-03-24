@@ -60,7 +60,7 @@ class listen(threading.Thread):
                            dtype=args.dtype, latency=args.latency,
                            channels=args.channels, callback=callback):
                 while self.running:
-                    time.sleep(0.5)
+                    time.sleep(0.1)
         except KeyboardInterrupt:
             parser.exit('')
         except Exception as e:

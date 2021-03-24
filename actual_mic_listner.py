@@ -60,6 +60,6 @@ class listen(threading.Thread):
                            dtype=args.dtype, latency=args.latency,
                            channels=args.channels, callback=callback):
                 while self.running:
-                    time.sleep(0.5)
+                    time.sleep(0.1)
         except Exception as e:
             parser.exit(type(e).__name__ + ': ' + str(e))

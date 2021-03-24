@@ -5,11 +5,16 @@ from threading import Thread
 import convert
 import os
 import time
+from pynput.keyboard import Controller
 class player(threading.Thread):
-    def __init__(self,audio,deviceid):
+    def __init__(self,audio,deviceid,key=None,pushtotalk=False):
         super().__init__()
         self.audio=audio
         self.device=deviceid
+        self.pushtotalk=pushtotalk
+        if self.pushtotalk:
+            self.pushkey=key
+            self.c=Controller()
     def check(self,audio):
         if audio[-3]!="wav":
             t=convert.convert_mp3_to_wav(audio)
@@ -27,11 +32,15 @@ class player(threading.Thread):
                 time.sleep(2)
     def run(self):
         self.check(self.audio)
-        self.t2=Thread(target=self.audio_play,args=(self.audio,self.device,))
-        self.t2.start()
+        self.audio_play(self.audio,self.device)
     def audio_play(self,audio,deviceid):
+        if self.pushtotalk:
+            self.c.press("v")
         data1, fs1 = sf.read(audio, dtype='float32')
         sd.play(data1, fs1, device=deviceid,blocking=True)
+        if self.pushtotalk:
+            self.c.release("v")
+        time.sleep(1)
     def stop(self):
         sd.stop()
 if __name__=="__main__":

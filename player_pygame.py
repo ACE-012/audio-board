@@ -10,7 +10,6 @@ from pynput.keyboard import Controller
 class player(threading.Thread):
     def __init__(self,name,device,key=None,pushtotalk=False):
         super().__init__()
-        print(device)
         self.audioname=name
         if name!="none" or device!="none":
             pygame.mixer.pre_init(devicename=device)
