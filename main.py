@@ -3,7 +3,7 @@ import tkinter
 import os
 import self_listner
 from tkinter.constants import *
-from tkinter.ttk import *
+from tkinter import *
 import sounddevice
 import registry_writer
 import list_of_devices
@@ -79,15 +79,19 @@ else:
     for i in range(12):
         functionkeys["f"+str(i+1)]=registry_writer.read(r"SOFTWARE\\virtual audio player\\f"+str(i+1))
 if registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")==None:
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\push to talk key","None")
-        pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\push to talk key","None")
+    pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
 else:
     pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
 if len(pushtotalkkey)>1 or len(pushtotalkkey)<1:
     pushtotalk=False
 else :
     pushtotalk=True
-
+if registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")==None:
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay","False")
+    useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
+else:
+    useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
 selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
 actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
 class gui(threading.Thread):
@@ -137,9 +141,13 @@ class gui(threading.Thread):
         self.drop = tkinter.OptionMenu(self.Instance_root , foldername , *self.options)
         self.drop.pack(anchor=NW)
         self.dir=[]
+        self.overlayvar=tkinter.BooleanVar()
+        self.overlayvar.set(useovarlay)
         self.myprint([foldername.get()])
         self.mymenu()
         selflisten.start()
+        if self.overlayvar.get()==True:
+            self.mycreateoverlay()
         self.Instance_root.mainloop()
     def mymenu(self):
         self.mymenubar=tkinter.Menu(self.Instance_root)
@@ -173,8 +181,34 @@ class gui(threading.Thread):
             self.newWindow.title("Settings")
             self.newWindow.minsize(400,400)
             self.newWindow.geometry("400x400")
+            self.overlaycheckbox=Checkbutton(self.newWindow,text="Use Overlay ?",variable=self.overlayvar ,onvalue=True,offvalue=False,command=self.myoverlay).pack()
             self.toggle_button(self.newWindow)
             self.devices()
+    def myoverlay(self):
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay",str(self.overlayvar.get()))
+        if self.overlayvar.get()==True:
+            self.mycreateoverlay()
+        else:
+            self.destroyoverlay()
+    def mycreateoverlay(self):
+        try:
+            if self.overlaywindow.state() == "normal":
+                self.overlaywindow.focus()
+        except:
+            self.overlaywindow = tkinter.Toplevel(self.Instance_root)
+            self.overlaywindow.attributes("-fullscreen", True)
+            self.overlaywindow.attributes("-transparentcolor", "red")
+            f=Frame(self.overlaywindow,width=self.Instance_root.winfo_screenwidth(),bg="red",borderwidth=10)
+            f.pack(anchor=CENTER, fill=BOTH,ipady=self.Instance_root.winfo_screenheight())
+            l=Label(f, textvariable=foldername)
+            l.pack(anchor=NW)
+            self.overlaywindow.wm_attributes("-topmost", True)
+            
+    def destroyoverlay(self):
+        try:
+            self.overlaywindow.destroy()
+        except:
+            pass
     def devices(self):
         n=sounddevice.query_devices()
         j=0
