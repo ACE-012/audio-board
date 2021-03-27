@@ -1,4 +1,5 @@
 from os import path
+import os
 import threading
 from pydub import AudioSegment
 
@@ -11,4 +12,8 @@ class convert_mp3_to_wav(threading.Thread):
         self.dst = "temp\\"+self.name+".wav"
     def run(self):
         sound = AudioSegment.from_mp3(self.src)
-        sound.export(self.dst, format="wav")
+        try :
+            sound.export(self.dst, format="wav")
+        except:
+            os.mkdir("temp")
+            sound.export(self.dst, format="wav")
