@@ -8,6 +8,7 @@ import registry_writer
 import list_of_devices
 import actual_mic_listner
 from time import *
+import tkinter.messagebox
 from pynput.keyboard import Key,Listener
 if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     registry_writer.read(r"SOFTWARE\\virtual audio player\\player")
@@ -110,6 +111,8 @@ class gui(threading.Thread):
         self.options = []
         self.mydirs=[]
         self.buttons =[]
+        if playback_device=="none":
+            tkinter.messagebox.showinfo("Notice",  "Please Configure it via settings under the menu button")
         self.overlayframe=Frame()
         self.window2option_playback = StringVar()
         self.window2option_playback.set(playback_device)
@@ -250,8 +253,8 @@ class gui(threading.Thread):
             j+=1
         virtualframe=Frame(self.newWindow)
         actualframe=Frame(self.newWindow)
-        Label(virtualframe, text="virtual").pack()
-        Label(actualframe, text="actual").pack()
+        Label(virtualframe, text="Virtual driver").pack()
+        Label(actualframe, text="Actual driver").pack()
         text=Entry(self.newWindow ,textvariable=self.pushtotalktext)
         text.pack()
         OptionMenu(virtualframe , self.window2option_playback , *self.playbackdevices ,command=self.playback).pack()
