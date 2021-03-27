@@ -8,15 +8,13 @@
 
 4)it reads upto 9 files in a folder
 
-5)you can also use the numpad to trigger the voices ;Note : Numlock must be On and press numpad 0 to stop the playing sound
+5)you can also use the numpad to trigger the voices ;Note : Numlock must be On and press numpad 0 to stop the playing sound and use use function keys to change the current directory
 
 6)the voice clips were downloaded from <https://www.myinstants.com/search/?name=Meme> this website
 
 ###############################################################
 
 ## Warning
-
-1)i still have not found a way to use your actual microphone and the virtual microphone simultaneously so you can useonly 1 at a time
 
 2)this is only tested in python 3.9.1 and 3.9.2
 
