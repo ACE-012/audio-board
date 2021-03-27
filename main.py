@@ -110,6 +110,7 @@ class gui(threading.Thread):
         self.options = []
         self.mydirs=[]
         self.buttons =[]
+        self.overlayframe=Frame()
         self.window2option_playback = StringVar()
         self.window2option_playback.set(playback_device)
         self.window2option_rec = StringVar()
@@ -197,11 +198,28 @@ class gui(threading.Thread):
             self.overlaywindow = Toplevel(self.Instance_root)
             self.overlaywindow.attributes("-fullscreen", True)
             self.overlaywindow.attributes("-transparentcolor", "red")
-            f=Frame(self.overlaywindow,width=self.Instance_root.winfo_screenwidth(),bg="red",borderwidth=10)
-            f.pack(anchor=CENTER, fill=BOTH,ipady=self.Instance_root.winfo_screenheight())
-            l=Label(f, textvariable=foldername)
+            self.overlayframe=Frame(self.overlaywindow,bg="red",borderwidth=10)
+            self.overlayframe.pack(anchor=CENTER,ipady=self.Instance_root.winfo_screenheight(),ipadx=self.Instance_root.winfo_screenwidth())
+            l=Label(self.overlayframe, textvariable=foldername)
             l.pack(anchor=NW)
+            self.mylist()
             self.overlaywindow.wm_attributes("-topmost", True)
+    def mylist(self):
+        try :
+            self.l1.destroy()
+        except:
+            pass
+        self.l1=Listbox(self.overlayframe,width=10,height=9)
+        b=[]
+        for i in buttons:
+            temp=i[:-4]
+            if foldername.get() in temp:
+                temp=temp.replace(foldername.get(),"")
+                temp=temp.replace("\\","")
+            b.append(temp)
+        self.l1.insert(1,*b)
+        self.l1.configure(state=DISABLED)
+        self.l1.pack(anchor=E)
     def destroyoverlay(self):
         try:
             self.overlaywindow.destroy()
@@ -359,6 +377,7 @@ class gui(threading.Thread):
                     j-=1
                 if j<=0:
                     break
+        self.mylist()
 
     def run(self):
         pass
@@ -384,7 +403,7 @@ class mylistner(threading.Thread):
         if playerthread.is_alive()==False:
             if actualmiclisten.is_alive()==False:
                 if hasattr(key,'char'):
-                    if key.char=='v':
+                    if key.char==pushtotalkkey[0]:
                         selflisten.running=False
                         actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
                         actualmiclisten.start()
@@ -445,7 +464,7 @@ class mylistner(threading.Thread):
         global selflisten,actualmiclisten,pushtotalkpressed
         if playerthread.is_alive()==False:
             if hasattr(key,'char'):
-                if key.char=='v':
+                if key.char==pushtotalkkey[0]:
                     while pushtotalkpressed==True:
                         if selflisten.is_alive()==False:
                             if actualmiclisten.is_alive():
