@@ -10,14 +10,53 @@ import actual_mic_listner
 from time import *
 import tkinter.messagebox
 from pynput.keyboard import Key,Listener
+buttons=[]
+foldername=None
+pushtotalkpressed=False
+playervar="pyaudio"
+functionkeys={}
 if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     registry_writer.read(r"SOFTWARE\\virtual audio player\\player")
     firstrun=False
+    actual_playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device")
+    actual_playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")
+    actual_rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device")
+    actual_rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")
+    playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
+    playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
+    rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
+    rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
+    pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
+    useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
+    for i in range(12):
+        functionkeys["f"+str(i+1)]=registry_writer.read(r"SOFTWARE\\virtual audio player\\f"+str(i+1))
 else:
     registry_writer.create(r"SOFTWARE\\virtual audio player\\player")
     firstrun=True
     registry_writer.write(r"SOFTWARE\\virtual audio player\\player","pyaudio")
-playervar="pyaudio"
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device id","0")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device","None")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device","none")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device id","0")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device id","0")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device","None")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device","none")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device id","0")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\push to talk key","None")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay","False")
+    actual_playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device")
+    actual_playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")
+    actual_rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device")
+    actual_rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")
+    playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
+    playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
+    rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
+    rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
+    pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
+    useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
+    for i in range(12):
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i+1),"None")
+        functionkeys["f"+str(i+1)]="None"
 if registry_writer.read(r"SOFTWARE\\virtual audio player\\player")=="pygame":
     import player_pygame as player
     playervar="pygame"
@@ -28,70 +67,10 @@ if playervar=="pygame":
     playerthread=player.player("none","none")
 else :
     playerthread=player.player("none",20)
-buttons=[]
-foldername=None
-pushtotalkpressed=False
-if registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")==None:
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device id","0")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device","None")
-    actual_playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device")
-    actual_playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")
-else:
-    actual_playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device")
-    actual_playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")
-
-if registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")==None:
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device id","0")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device","None")
-    actual_rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device")
-    actual_rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")
-else:
-    actual_rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device")
-    actual_rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")
-if playervar=="pyaudio":
-    if registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")!=None:
-        playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
-        playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
-    else:
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device","none")
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device id","0")
-        playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
-        playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
-    if registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")!=None:
-        rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
-        rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
-    else:
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device","none")
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device id","0")
-        rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
-        rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
-else:
-    playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
-    rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
-    playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
-    rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
-functionkeys={}
-if registry_writer.read(r"SOFTWARE\\virtual audio player\\f1")==None:
-    for i in range(12):
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i+1),"None")
-        functionkeys["f"+str(i+1)]="None"
-else:   
-    for i in range(12):
-        functionkeys["f"+str(i+1)]=registry_writer.read(r"SOFTWARE\\virtual audio player\\f"+str(i+1))
-if registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")==None:
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\push to talk key","None")
-    pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
-else:
-    pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
 if len(pushtotalkkey)>1 or len(pushtotalkkey)<1:
     pushtotalk=False
 else :
     pushtotalk=True
-if registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")==None:
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay","False")
-    useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
-else:
-    useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
 selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
 actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
 class gui(threading.Thread):
@@ -111,8 +90,6 @@ class gui(threading.Thread):
         self.options = []
         self.mydirs=[]
         self.buttons =[]
-        if playback_device=="none":
-            tkinter.messagebox.showinfo("Notice",  "Please Configure it via settings under the menu button")
         self.overlayframe=Frame()
         self.window2option_playback = StringVar()
         self.window2option_playback.set(playback_device)
@@ -134,6 +111,7 @@ class gui(threading.Thread):
             self.options.append(dir)
         if firstrun:
             self.folderasign()
+            tkinter.messagebox.showinfo("Notice",  "Please Configure it via settings under the menu button")
         global foldername
         foldername=StringVar()
         foldername.set("default")

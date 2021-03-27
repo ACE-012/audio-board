@@ -1,7 +1,6 @@
 import sounddevice as sd
 import soundfile as sf
 import threading
-from threading import Thread
 import convert
 import os
 import time
