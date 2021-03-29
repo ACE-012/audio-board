@@ -82,6 +82,9 @@ class gui(threading.Thread):
         self.mainwindow=Tk()
         self.mainwindow.geometry("0x0")
         self.mainwindow.overrideredirect(1)
+        p1 = PhotoImage(file = 'requirements\\play.png')
+        self.mainwindow.iconphoto(False,p1)
+        self.mainwindow.iconbitmap(default='requirements\\play.ico')
         self.mainwindowbool=BooleanVar()
         self.mainwindowbool.trace("w", lambda name, index, mode, sv=self.mainwindowbool: self.main(sv))
         self.playbackdevices={}
@@ -131,8 +134,8 @@ class gui(threading.Thread):
     def main(self,check):
         if check.get()==True:
             try:
-                if self.newWindow.state() == "normal":
-                    self.newWindow.focus()
+                if self.Instance_root.state() == "normal":
+                    self.Instance_root.focus()
             except:
                 self.Instance_root=Toplevel(self.mainwindow)
                 self.Instance_root.geometry("1280x720")
