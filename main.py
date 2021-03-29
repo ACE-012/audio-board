@@ -3,18 +3,21 @@ import os
 import self_listner
 from tkinter.constants import *
 from tkinter import *
+import tkinter.messagebox
+from tkinter import ttk
 import sounddevice
 import registry_writer
 import list_of_devices
 import actual_mic_listner
 from time import *
-import tkinter.messagebox
 from pynput.keyboard import Key,Listener
 buttons=[]
 foldername=None
 pushtotalkpressed=False
 playervar="pyaudio"
 functionkeys={}
+for i in range(12):
+    functionkeys["f"+str(i+1)]="None"
 if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     registry_writer.read(r"SOFTWARE\\virtual audio player\\player")
     firstrun=False
@@ -28,8 +31,6 @@ if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
     pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
     useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
-    for i in range(12):
-        functionkeys["f"+str(i+1)]=registry_writer.read(r"SOFTWARE\\virtual audio player\\f"+str(i+1))
 else:
     registry_writer.create(r"SOFTWARE\\virtual audio player\\player")
     firstrun=True
@@ -54,9 +55,6 @@ else:
     rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
     pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
     useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
-    for i in range(12):
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i+1),"None")
-        functionkeys["f"+str(i+1)]="None"
 if registry_writer.read(r"SOFTWARE\\virtual audio player\\player")=="pygame":
     import player_pygame as player
     playervar="pygame"
@@ -114,7 +112,7 @@ class gui(threading.Thread):
             tkinter.messagebox.showinfo("Notice",  "Please Configure it via settings under the menu button")
         global foldername
         foldername=StringVar()
-        foldername.set("default")
+        foldername.set(self.options[0])
         foldername.trace("w", lambda name, index, mode, sv=foldername: self.callback(sv))
         self.toggle_btn_text=StringVar()
         self.toggle_btn_text.set(player)
@@ -142,7 +140,6 @@ class gui(threading.Thread):
         for dir in self.mydirs:
             if i<=12 and functionkeys["f"+str(i)]=="None":
                 functionkeys["f"+str(i)]=dir
-                registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i),dir)
             i+=1
     def pushtotalkkeychange(self,textvar):
         global pushtotalkkey,pushtotalk
@@ -182,6 +179,7 @@ class gui(threading.Thread):
             self.overlayframe=Frame(self.overlaywindow,bg="red",borderwidth=10)
             self.overlayframe.pack(anchor=CENTER,ipady=self.Instance_root.winfo_screenheight(),ipadx=self.Instance_root.winfo_screenwidth())
             l=Label(self.overlayframe, textvariable=foldername)
+            self.overlayframe.grab_status()
             l.pack(anchor=NW)
             self.mylist()
             self.overlaywindow.wm_attributes("-topmost", True)
@@ -298,7 +296,6 @@ class gui(threading.Thread):
         for key in functionkeys.values():
             if key not in self.mydirs:
                 functionkeys["f"+str(i)]="None"
-                registry_writer.write(r"SOFTWARE\\virtual audio player\\f"+str(i),"None")
             i+=1
     def toggle_button(self,root):
         self.toggle_button_instance=Button(root ,text=self.toggle_btn_text.get(), height=2,width=10,bd = '5',command=self.set_toggle_button)
