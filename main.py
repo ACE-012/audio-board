@@ -366,13 +366,13 @@ class gui(threading.Thread):
     def play(self,dir_name):
         global playerthread
         if pushtotalkpressed==False:
-            if playerthread.is_alive():
-                playerthread.stop()
-            if playervar=="pygame":
-                playerthread=player.player(dir_name,playback_device,pushtotalkkey,pushtotalk)
-            else:
-                playerthread=player.player(dir_name,9,pushtotalkkey,pushtotalk)
-            playerthread.start()
+                if playerthread.is_alive():
+                    playerthread.stop()
+                if  playervar=="pygame":
+                    playerthread=player.player(dir_name,playback_device,pushtotalkkey,pushtotalk)
+                else:
+                    playerthread=player.player(dir_name,9,pushtotalkkey,pushtotalk)
+                playerthread.start()
 
 class mylistner(threading.Thread):
 
@@ -385,23 +385,23 @@ class mylistner(threading.Thread):
             if actualmiclisten.is_alive()==False:
                 if hasattr(key,'char'):
                     if key.char==pushtotalkkey[0]:
-                        selflisten.running=False
-                        actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
-                        actualmiclisten.start()
-                        global pushtotalkpressed
-                        pushtotalkpressed=True
+                            selflisten.running=False
+                            actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
+                            actualmiclisten.start()
+                            global pushtotalkpressed
+                            pushtotalkpressed=True
         if hasattr(key, 'vk') and 96 <= key.vk <= 105:
-            if key.vk-97<len(buttons) and key.vk-97!=-1:
-                if pushtotalkpressed==False:
-                    if playerthread.is_alive():
-                        playerthread.stop()
-                    if playervar=="pygame":
-                        playerthread=player.player(buttons[key.vk-97],playback_device,pushtotalkkey,pushtotalk)
-                    else:
-                        playerthread=player.player(buttons[key.vk-97],int(playback_device_id),pushtotalkkey,pushtotalk)
-                    playerthread.start()
-            if key.vk-96==0:
-                playerthread.stop()
+                if key.vk-97<len(buttons) and key.vk-97!=-1:
+                    if pushtotalkpressed==False:
+                        if playerthread.is_alive():
+                            playerthread.stop()
+                        if playervar=="pygame":
+                            playerthread=player.player(buttons[key.vk-97],playback_device,pushtotalkkey,pushtotalk)
+                        else:
+                            playerthread=player.player(buttons[key.vk-97],int(playback_device_id),pushtotalkkey,pushtotalk)
+                        playerthread.start()
+                if key.vk-96==0:
+                    playerthread.stop()
         if type(key)==Key:
             if key==key.f1:
                 if functionkeys["f1"]!="None":

@@ -6,6 +6,9 @@ import pip
 #playsound
 #pygame
 #sounddevice
+#numpy
+#soundfile
+#pydub
 def install(package):
     if hasattr(pip, 'main'):
         pip.main(['install', package])
@@ -19,3 +22,6 @@ if __name__ == '__main__':
     install('playsound')
     install('pygame')
     install('sounddevice')
+    install('numpy')
+    install('soundfile')
+    install('pydub')
