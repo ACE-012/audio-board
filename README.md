@@ -10,6 +10,8 @@
 
 5)the voice clips were downloaded from <https://www.myinstants.com/search/?name=Meme> this website
 
+6)to reset it delete the following key "Computer\HKEY_CURRENT_USER\SOFTWARE\virtual audio player"
+
 ###############################################################
 
 ## Warning
