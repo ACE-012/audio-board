@@ -1,11 +1,6 @@
 import time
-from pynput.keyboard import Key,Listener
-import os
-def on_press(key):
-    print(time.time())
-    print(key)
-    if type(key)==Key:
-        if key==key.esc:
-            os._exit(0)
-with Listener(on_press=on_press) as listener:
-    listener.join()
+timestamp = int(time.time()*1000.0)
+print(timestamp)
+time.sleep(0.30)
+timestamp1 = int(time.time()*1000.0)
+print(timestamp1-timestamp)

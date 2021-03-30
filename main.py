@@ -16,7 +16,8 @@ foldername=None
 pushtotalkpressed=False
 playervar="pyaudio"
 functionkeys={}
-systraythread=mysystray.mytray("None")
+firstplay= int(time()*1000.0)
+secondplay=int(time()*1000.0)
 for i in range(12):
     functionkeys["f"+str(i+1)]="None"
 if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
@@ -85,8 +86,8 @@ class gui(threading.Thread):
         p1 = PhotoImage(file = 'requirements\\play.png')
         self.mainwindow.iconphoto(False,p1)
         self.mainwindow.iconbitmap(default='requirements\\play.ico')
-        self.mainwindowbool=BooleanVar()
-        self.mainwindowbool.trace("w", lambda name, index, mode, sv=self.mainwindowbool: self.main(sv))
+        self.windowvar=StringVar()
+        self.windowvar.trace("w", lambda name, index, mode, sv=self.windowvar: self.main(sv))
         self.playbackdevices={}
         self.recdevices={}
         self.options = []
@@ -122,17 +123,17 @@ class gui(threading.Thread):
         self.dir=[]
         self.overlayvar=BooleanVar()
         self.rootsystrayvar=BooleanVar()
-        self.overlayvar.set(useovarlay)
         self.rootsystrayvar.set(systrayvar)
         selflisten.start()
-        if self.overlayvar.get()==True:
-            self.mycreateoverlay()
+        self.systraythread=mysystray.mytray(self.windowvar,self.overlayvar)
+        self.overlayvar.trace("w", lambda name, index, mode, sv=self.overlayvar: self.myoverlay(sv))
+        self.overlayvar.set(useovarlay)
         if self.rootsystrayvar.get()==True:
             self.mysystemtray()
-        self.mainwindowbool.set(True)
+        self.windowvar.set("main")
         self.mainwindow.mainloop()
     def main(self,check):
-        if check.get()==True:
+        if check.get()=="main":
             try:
                 if self.Instance_root.state() == "normal":
                     self.Instance_root.focus()
@@ -148,7 +149,13 @@ class gui(threading.Thread):
                 self.drop.pack(anchor=NW)
                 self.myprint([foldername.get()])
                 self.mymenu()
+        elif check.get()=="settings":
+            self.settings()
         else:
+            try:
+                self.newWindow.destroy()
+            except:
+                pass
             self.Instance_root.destroy()
     def mymenu(self):
         self.mymenubar=Menu(self.Instance_root)
@@ -177,17 +184,17 @@ class gui(threading.Thread):
             if self.newWindow.state() == "normal":
                 self.newWindow.focus()
         except:
-            self.newWindow = Toplevel(self.Instance_root) 
+            self.newWindow = Toplevel(self.mainwindow) 
             self.newWindow.title("Settings")
             self.newWindow.minsize(400,400)
             self.newWindow.geometry("400x400")
-            self.overlaycheckbox=Checkbutton(self.newWindow,text="Use Overlay ?",variable=self.overlayvar ,onvalue=True,offvalue=False,command=self.myoverlay).pack()
+            self.overlaycheckbox=Checkbutton(self.newWindow,text="Use Overlay ?",variable=self.overlayvar ,onvalue=True,offvalue=False).pack()
             self.systraycheckbox=Checkbutton(self.newWindow,text="On Exit Minimize to System tray ?",variable=self.rootsystrayvar ,onvalue=True,offvalue=False,command=self.mysystemtray).pack()
             self.toggle_button(self.newWindow)
             self.devices()
-    def myoverlay(self):
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay",str(self.overlayvar.get()))
-        if self.overlayvar.get()==True:
+    def myoverlay(self,status):
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay",str(status.get()))
+        if status.get()==True:
             self.mycreateoverlay()
         else:
             self.destroyoverlay()
@@ -195,12 +202,12 @@ class gui(threading.Thread):
         global systraythread
         registry_writer.write(r"SOFTWARE\\virtual audio player\\use systray",str(self.rootsystrayvar.get()))
         if self.rootsystrayvar.get()==True:
-            if systraythread.is_alive()==False:
-                systraythread = mysystray.mytray(self.mainwindowbool)
+            if self.systraythread.is_alive()==False:
+                systraythread = mysystray.mytray(self.windowvar,self.overlayvar)
                 systraythread.start()
         else :
-            if systraythread.is_alive():
-                systraythread.stop()
+            if self.systraythread.is_alive():
+                self.systraythread.stop()
     def mycreateoverlay(self):
         try:
             if self.overlaywindow.state() == "normal":
@@ -304,10 +311,7 @@ class gui(threading.Thread):
         actual_rec_device=text
         actual_rec_device_id=self.recdevices[text]
     def callback(self,sv):
-        try:
-            self.myprint(sv.get())
-        except:
-            pass
+        self.myprint(sv.get())
     def dircheck(self):
         for testdir in self.mydirs:
             if testdir=="temp":
@@ -352,7 +356,7 @@ class gui(threading.Thread):
         if self.rootsystrayvar.get()==False:
             os._exit(0)
         else:
-            self.mainwindowbool.set(False)
+            self.windowvar.set("destroy")
 
     def mytrim(self,filename):
         filename=filename.replace("-"," ")
@@ -405,17 +409,19 @@ class gui(threading.Thread):
 
     def run(self):
         pass
-
     def play(self,dir_name):
-        global playerthread
-        if pushtotalkpressed==False:
-                if playerthread.is_alive():
-                    playerthread.stop()
-                if  playervar=="pygame":
-                    playerthread=player.player(dir_name,playback_device,pushtotalkkey,pushtotalk)
-                else:
-                    playerthread=player.player(dir_name,9,pushtotalkkey,pushtotalk)
-                playerthread.start()
+        global playerthread,secondplay,firstplay
+        secondplay=int(time()*1000.0)
+        if secondplay-firstplay >=350:
+            firstplay=secondplay
+            if pushtotalkpressed==False:
+                    if playerthread.is_alive():
+                        playerthread.stop()
+                    if  playervar=="pygame":
+                        playerthread=player.player(dir_name,playback_device,pushtotalkkey,pushtotalk)
+                    else:
+                        playerthread=player.player(dir_name,9,pushtotalkkey,pushtotalk)
+                    playerthread.start()
 
 class mylistner(threading.Thread):
 
@@ -434,15 +440,19 @@ class mylistner(threading.Thread):
                             global pushtotalkpressed
                             pushtotalkpressed=True
         if hasattr(key, 'vk') and 96 <= key.vk <= 105:
+                global firstplay,secondplay
                 if key.vk-97<len(buttons) and key.vk-97!=-1:
-                    if pushtotalkpressed==False:
-                        if playerthread.is_alive():
-                            playerthread.stop()
-                        if playervar=="pygame":
-                            playerthread=player.player(buttons[key.vk-97],playback_device,pushtotalkkey,pushtotalk)
-                        else:
-                            playerthread=player.player(buttons[key.vk-97],int(playback_device_id),pushtotalkkey,pushtotalk)
-                        playerthread.start()
+                    secondplay=int(time()*1000.0)
+                    if secondplay-firstplay >=350:
+                        firstplay=secondplay
+                        if pushtotalkpressed==False:
+                            if playerthread.is_alive():
+                                playerthread.stop()
+                            if playervar=="pygame":
+                                playerthread=player.player(buttons[key.vk-97],playback_device,pushtotalkkey,pushtotalk)
+                            else:
+                                playerthread=player.player(buttons[key.vk-97],int(playback_device_id),pushtotalkkey,pushtotalk)
+                            playerthread.start()
                 if key.vk-96==0:
                     playerthread.stop()
         if type(key)==Key:
@@ -493,6 +503,8 @@ class mylistner(threading.Thread):
                         if selflisten.is_alive()==False:
                             if actualmiclisten.is_alive():
                                 actualmiclisten.running=False
+                                while actualmiclisten.is_alive():
+                                    sleep(0.01)
                                 selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
                                 selflisten.start()
                                 pushtotalkpressed=False
