@@ -83,7 +83,11 @@ class gui(threading.Thread):
         self.mainwindow=Tk()
         self.mainwindow.geometry("0x0")
         self.mainwindow.overrideredirect(1)
-        p1 = PhotoImage(file = 'requirements\\play.png')
+        try:
+            p1 = PhotoImage(file = 'requirements\\play.png')
+        except:
+            tkinter.messagebox.showinfo("Error",  "Requirements folder not found")
+            os._exit(0)
         self.mainwindow.iconphoto(False,p1)
         self.mainwindow.iconbitmap(default='requirements\\play.ico')
         self.windowvar=StringVar()
