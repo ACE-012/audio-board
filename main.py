@@ -11,13 +11,16 @@ import actual_mic_listner
 from time import *
 from pynput.keyboard import Key,Listener
 import mysystray
+import keycode_listner
 buttons=[]
 foldername=None
 pushtotalkpressed=False
 playervar="pyaudio"
 functionkeys={}
+lockcursorkey=""
 firstplay= int(time()*1000.0)
 secondplay=int(time()*1000.0)
+rootwindow=None
 for i in range(12):
     functionkeys["f"+str(i+1)]="None"
 if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
@@ -34,6 +37,7 @@ if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
     useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
     systrayvar=registry_writer.read(r"SOFTWARE\\virtual audio player\\use systray")
+    lockcursorkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\use mouse lock")
 else:
     registry_writer.create(r"SOFTWARE\\virtual audio player\\player")
     firstrun=True
@@ -49,6 +53,7 @@ else:
     registry_writer.write(r"SOFTWARE\\virtual audio player\\push to talk key","None")
     registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay","False")
     registry_writer.write(r"SOFTWARE\\virtual audio player\\use systray","False")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\use mouse lock","None")
     actual_playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device")
     actual_playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")
     actual_rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device")
@@ -60,6 +65,7 @@ else:
     pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
     useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
     systrayvar=registry_writer.read(r"SOFTWARE\\virtual audio player\\use systray")
+    lockcursorkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\use mouse lock")
 if registry_writer.read(r"SOFTWARE\\virtual audio player\\player")=="pygame":
     import player_pygame as player
     playervar="pygame"
@@ -81,6 +87,8 @@ class gui(threading.Thread):
     def __init__(self,player):
         super().__init__()
         self.mainwindow=Tk()
+        global rootwindow
+        rootwindow=self.mainwindow
         self.mainwindow.geometry("0x0")
         self.mainwindow.overrideredirect(1)
         try:
@@ -126,16 +134,24 @@ class gui(threading.Thread):
         self.myfiles=[]
         self.dir=[]
         self.overlayvar=BooleanVar()
+        global lockcursorkey
+        t=lockcursorkey
+        lockcursorkey=StringVar()
+        lockcursorkey.set(t)
         self.rootsystrayvar=BooleanVar()
         self.rootsystrayvar.set(systrayvar)
         selflisten.start()
         self.systraythread=mysystray.mytray(self.windowvar,self.overlayvar)
         self.overlayvar.trace("w", lambda name, index, mode, sv=self.overlayvar: self.myoverlay(sv))
+        lockcursorkey.trace("w", lambda name, index, mode, sv=lockcursorkey: self.lockcursorvar(sv))
         self.overlayvar.set(useovarlay)
         if self.rootsystrayvar.get()==True:
             self.mysystemtray()
         self.windowvar.set("main")
         self.mainwindow.mainloop()
+    def lockcursorvar(self,sv):
+        registry_writer.write(r"SOFTWARE\\virtual audio player\\use mouse lock",sv.get())
+        global lockcursorkey
     def main(self,check):
         if check.get()=="main":
             try:
@@ -192,10 +208,13 @@ class gui(threading.Thread):
             self.newWindow.title("Settings")
             self.newWindow.minsize(400,400)
             self.newWindow.geometry("400x400")
-            self.overlaycheckbox=Checkbutton(self.newWindow,text="Use Overlay ?",variable=self.overlayvar ,onvalue=True,offvalue=False).pack()
+            Checkbutton(self.newWindow,text="Use Overlay ?",variable=self.overlayvar ,onvalue=True,offvalue=False).pack()
+            Button(self.newWindow,command=self.savelockbutton,textvariable=lockcursorkey).pack()
             self.systraycheckbox=Checkbutton(self.newWindow,text="On Exit Minimize to System tray ?",variable=self.rootsystrayvar ,onvalue=True,offvalue=False,command=self.mysystemtray).pack()
             self.toggle_button(self.newWindow)
             self.devices()
+    def savelockbutton(self):
+        lockcursorkey.set(keycode_listner.get_button_str())
     def myoverlay(self,status):
         registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay",str(status.get()))
         if status.get()==True:
@@ -203,14 +222,15 @@ class gui(threading.Thread):
         else:
             self.destroyoverlay()
     def mysystemtray(self):
-        global systraythread
         registry_writer.write(r"SOFTWARE\\virtual audio player\\use systray",str(self.rootsystrayvar.get()))
         if self.rootsystrayvar.get()==True:
             if self.systraythread.is_alive()==False:
-                systraythread = mysystray.mytray(self.windowvar,self.overlayvar)
-                systraythread.start()
+                self.systraythread = mysystray.mytray(self.windowvar,self.overlayvar)
+                self.systraythread.start()
         else :
-            if self.systraythread.is_alive():
+            self.systraythread.stop()
+            while self.systraythread.is_alive():
+                sleep(0.1)
                 self.systraythread.stop()
     def mycreateoverlay(self):
         try:
@@ -220,14 +240,16 @@ class gui(threading.Thread):
             self.overlaywindow = Toplevel(self.mainwindow)
             self.overlaywindow.attributes("-fullscreen", True)
             self.overlaywindow.attributes("-transparentcolor", "red")
-            self.overlayframe=Frame(self.overlaywindow,bg="red",borderwidth=10)
+            self.overlaywindow.update_idletasks()
+            self.overlaywindow.lift()
+            self.overlayframe=Frame(self.overlaywindow,bg="red",borderwidth=10,highlightthickness=0)
             self.overlayframe.pack(anchor=CENTER,ipady=self.mainwindow.winfo_screenheight(),ipadx=self.mainwindow.winfo_screenwidth())
             l=Label(self.overlayframe, textvariable=foldername)
-            self.overlayframe.grab_status()
             l.pack(anchor=NW)
             self.mylist()
             self.overlaywindow.wm_attributes("-topmost", True)
             self.overlaywindow.config(cursor='none')
+            self.overlaywindow.overrideredirect(1)
     def mylist(self):
         try :
             self.l1.destroy()
@@ -426,14 +448,28 @@ class gui(threading.Thread):
                     else:
                         playerthread=player.player(dir_name,9,pushtotalkkey,pushtotalk)
                     playerthread.start()
-
-class mylistner(threading.Thread):
-
+class cursor_lock(threading.Thread):
     def __init__(self):
         super().__init__()
-
+        self.running=True
+    def run(self):
+        while self.running:
+            rootwindow.event_generate('<Motion>', warp=True, x=rootwindow.winfo_screenwidth()/2, y=rootwindow.winfo_screenheight()/2)
+lockcursor=cursor_lock()
+class mylistner(threading.Thread):
+    def __init__(self):
+        super().__init__()
+        self.locked=False
     def on_press(self,key):
-        global playerthread,actualmiclisten
+        global playerthread,actualmiclisten,lockcursorkey,rootwindow,lockcursor
+        if lockcursorkey.get()==keycode_listner.getstr(key):
+            if self.locked==True:
+                lockcursor.running=False
+                self.locked=False
+            else:
+                lockcursor=cursor_lock()
+                lockcursor.start()
+                self.locked=True
         if playerthread.is_alive()==False:
             if actualmiclisten.is_alive()==False:
                 if hasattr(key,'char'):
@@ -532,5 +568,5 @@ class main(threading.Thread):
 
 mainthread=main()
 mainthread.start()
-threadgui=gui(player=registry_writer.read(r"SOFTWARE\\virtual audio player\\player"))
+threadgui=gui(player=playervar)
 threadgui.start()
