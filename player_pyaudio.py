@@ -37,12 +37,12 @@ class player(threading.Thread):
     def audio_play(self,audio,deviceid):
         if self.pushtotalk:
             self.c.press(self.pushkey)
-        data1, fs1 = sf.read(audio, dtype='float32')
-        sd.play(data1, fs1, device=deviceid,blocking=True)
+        data, fs = sf.read(audio, dtype='float32')
+        sd.play(data, fs, device=deviceid,blocking=True)
         if self.pushtotalk:
             self.c.release(self.pushkey)
         time.sleep(1)
     def stop(self):
         sd.stop()
 if __name__=="__main__":
-    p=player("default\\hello there.mp3",9).start()
+    p=player("temp\\bruh.wav",8).start()

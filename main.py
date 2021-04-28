@@ -9,103 +9,138 @@ import registry_writer
 import list_of_devices
 import actual_mic_listner
 from time import *
-from pynput.keyboard import Key,Listener
+from pynput.keyboard import Key, Listener
 import mysystray
 import keycode_listner
-buttons=[]
-foldername=None
-pushtotalkpressed=False
-playervar="pyaudio"
-functionkeys={}
-lockcursorkey=""
-firstplay= int(time()*1000.0)
-secondplay=int(time()*1000.0)
-rootwindow=None
+import win32gui
+import win32con
+buttons = []
+foldername = None
+pushtotalkpressed = False
+playervar = "pyaudio"
+functionkeys = {}
+firstplay = int(time()*1000.0)
+secondplay = int(time()*1000.0)
+rootwindow = None
 for i in range(12):
-    functionkeys["f"+str(i+1)]="None"
+    functionkeys["f"+str(i+1)] = "None"
 if registry_writer.reg_check(r"SOFTWARE\\virtual audio player"):
     registry_writer.read(r"SOFTWARE\\virtual audio player\\player")
-    firstrun=False
-    actual_playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device")
-    actual_playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")
-    actual_rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device")
-    actual_rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")
-    playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
-    playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
-    rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
-    rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
-    pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
-    useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
-    systrayvar=registry_writer.read(r"SOFTWARE\\virtual audio player\\use systray")
-    lockcursorkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\use mouse lock")
+    firstrun = False
+    actual_playback_device = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\actual playback device")
+    actual_playback_device_id = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\actual playback device id")
+    actual_rec_device = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\actual rec device")
+    actual_rec_device_id = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\actual rec device id")
+    playback_device = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\playback device")
+    playback_device_id = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\playback device id")
+    rec_device_id = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\rec device id")
+    rec_device = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\rec device")
+    pushtotalkkey = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\push to talk key")
+    useovarlay = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\overlay")
+    systrayvar = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\use systray")
 else:
     registry_writer.create(r"SOFTWARE\\virtual audio player\\player")
-    firstrun=True
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\player","pyaudio")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device id","0")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual playback device","None")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device","none")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\playback device id","0")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device id","0")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\actual rec device","None")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device","none")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\rec device id","0")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\push to talk key","None")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay","False")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\use systray","False")
-    registry_writer.write(r"SOFTWARE\\virtual audio player\\use mouse lock","None")
-    actual_playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device")
-    actual_playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual playback device id")
-    actual_rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device")
-    actual_rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\actual rec device id")
-    playback_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device id")
-    playback_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\playback device")
-    rec_device=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device")
-    rec_device_id=registry_writer.read(r"SOFTWARE\\virtual audio player\\rec device id")
-    pushtotalkkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\push to talk key")
-    useovarlay=registry_writer.read(r"SOFTWARE\\virtual audio player\\overlay")
-    systrayvar=registry_writer.read(r"SOFTWARE\\virtual audio player\\use systray")
-    lockcursorkey=registry_writer.read(r"SOFTWARE\\virtual audio player\\use mouse lock")
-if registry_writer.read(r"SOFTWARE\\virtual audio player\\player")=="pygame":
+    firstrun = True
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\player", "pyaudio")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\actual playback device id", "0")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\actual playback device", "None")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\playback device", "none")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\playback device id", "0")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\actual rec device id", "0")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\actual rec device", "None")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\rec device", "none")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\rec device id", "0")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\push to talk key", "None")
+    registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay", "False")
+    registry_writer.write(
+        r"SOFTWARE\\virtual audio player\\use systray", "False")
+    actual_playback_device = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\actual playback device")
+    actual_playback_device_id = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\actual playback device id")
+    actual_rec_device = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\actual rec device")
+    actual_rec_device_id = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\actual rec device id")
+    playback_device_id = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\playback device id")
+    playback_device = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\playback device")
+    rec_device = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\rec device")
+    rec_device_id = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\rec device id")
+    pushtotalkkey = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\push to talk key")
+    useovarlay = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\overlay")
+    systrayvar = registry_writer.read(
+        r"SOFTWARE\\virtual audio player\\use systray")
+if registry_writer.read(r"SOFTWARE\\virtual audio player\\player") == "pygame":
     import player_pygame as player
-    playervar="pygame"
-else :
+    playervar = "pygame"
+else:
     import player_pyaudio as player
-    playervar="pyaudio"
-if playervar=="pygame":
-    playerthread=player.player("none","none")
-else :
-    playerthread=player.player("none",20)
-if len(pushtotalkkey)>1 or len(pushtotalkkey)<1:
-    pushtotalk=False
-else :
-    pushtotalk=True
-selflisten=self_listner.listen(rec_device_id,actual_playback_device_id)
-actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
+    playervar = "pyaudio"
+if playervar == "pygame":
+    playerthread = player.player("none", "none")
+else:
+    playerthread = player.player("none", 20)
+if len(pushtotalkkey) > 1 or len(pushtotalkkey) < 1:
+    pushtotalk = False
+else:
+    pushtotalk = True
+selflisten = self_listner.listen(rec_device_id, actual_playback_device_id)
+actualmiclisten = actual_mic_listner.listen(
+    actual_rec_device_id, playback_device_id)
+
+
 class gui(threading.Thread):
 
-    def __init__(self,player):
+    def __init__(self, player):
         super().__init__()
-        self.mainwindow=Tk()
+        self.mainwindow = Tk()
         global rootwindow
-        rootwindow=self.mainwindow
+        rootwindow = self.mainwindow
         self.mainwindow.geometry("0x0")
         self.mainwindow.overrideredirect(1)
         try:
-            p1 = PhotoImage(file = 'requirements\\play.png')
+            p1 = PhotoImage(file='requirements\\play.png')
         except:
-            tkinter.messagebox.showinfo("Error",  "Requirements folder not found")
+            tkinter.messagebox.showinfo(
+                "Error",  "Requirements folder not found")
             os._exit(0)
-        self.mainwindow.iconphoto(False,p1)
+        self.mainwindow.iconphoto(False, p1)
         self.mainwindow.iconbitmap(default='requirements\\play.ico')
-        self.windowvar=StringVar()
-        self.windowvar.trace("w", lambda name, index, mode, sv=self.windowvar: self.main(sv))
-        self.playbackdevices={}
-        self.recdevices={}
+        self.windowvar = StringVar()
+        self.windowvar.trace("w", lambda name, index, mode,
+                             sv=self.windowvar: self.main(sv.get()))
+        self.playbackdevices = {}
+        self.recdevices = {}
         self.options = []
-        self.mydirs=[]
-        self.buttons =[]
-        self.overlayframe=Frame()
+        self.mydirs = []
+        self.buttons = []
+        self.overlayframe = Frame()
         self.window2option_playback = StringVar()
         self.window2option_playback.set(playback_device)
         self.window2option_rec = StringVar()
@@ -114,62 +149,69 @@ class gui(threading.Thread):
         self.window2option_actual_playback.set(actual_playback_device)
         self.window2option_actual_rec = StringVar()
         self.window2option_actual_rec.set(actual_rec_device)
-        self.pushtotalktext=StringVar()
+        self.pushtotalktext = StringVar()
         self.pushtotalktext.set(pushtotalkkey)
-        self.pushtotalktext.trace("w", lambda name, index, mode, sv=self.pushtotalktext: self.pushtotalkkeychange(sv))
+        self.pushtotalktext.trace(
+            "w", lambda name, index, mode, sv=self.pushtotalktext: self.pushtotalkkeychange(sv))
         for root, dirs, files in os.walk(".", topdown=False):
-            self.mydirs=dirs
+            self.mydirs = dirs
         self.dircheck()
         for dir in self.mydirs:
             self.options.append(dir)
         if firstrun:
             self.folderasign()
-            tkinter.messagebox.showinfo("Notice",  "Please Configure it via settings under the menu button")
+            tkinter.messagebox.showinfo(
+                "Notice",  "Please Configure it via settings under the menu button")
         global foldername
-        foldername=StringVar()
+        foldername = StringVar()
         foldername.set(self.options[0])
-        foldername.trace("w", lambda name, index, mode, sv=foldername: self.callback(sv))
-        self.toggle_btn_text=StringVar()
+        foldername.trace("w", lambda name, index, mode,
+                         sv=foldername: self.callback(sv))
+        self.toggle_btn_text = StringVar()
         self.toggle_btn_text.set(player)
-        self.myfiles=[]
-        self.dir=[]
-        self.overlayvar=BooleanVar()
-        global lockcursorkey
-        t=lockcursorkey
-        lockcursorkey=StringVar()
-        lockcursorkey.set(t)
-        self.rootsystrayvar=BooleanVar()
+        self.myfiles = []
+        self.dir = []
+        self.overlayvar = BooleanVar()
+        lockcursorkey = StringVar()
+        self.rootsystrayvar = BooleanVar()
         self.rootsystrayvar.set(systrayvar)
         selflisten.start()
-        self.systraythread=mysystray.mytray(self.windowvar,self.overlayvar)
-        self.overlayvar.trace("w", lambda name, index, mode, sv=self.overlayvar: self.myoverlay(sv))
-        lockcursorkey.trace("w", lambda name, index, mode, sv=lockcursorkey: self.lockcursorvar(sv))
+        self.systraythread = mysystray.mytray(self.windowvar, self.overlayvar)
+        self.overlayvar.trace("w", lambda name, index,
+                              mode, sv=self.overlayvar: self.myoverlay(sv))
+        lockcursorkey.trace("w", lambda name, index, mode,
+                            sv=lockcursorkey: self.lockcursorvar(sv))
         self.overlayvar.set(useovarlay)
-        if self.rootsystrayvar.get()==True:
+        if self.rootsystrayvar.get() == True:
             self.mysystemtray()
         self.windowvar.set("main")
         self.mainwindow.mainloop()
-    def lockcursorvar(self,sv):
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\use mouse lock",sv.get())
+
+    def lockcursorvar(self, sv):
+        registry_writer.write(
+            r"SOFTWARE\\virtual audio player\\use mouse lock", sv.get())
         global lockcursorkey
-    def main(self,check):
-        if check.get()=="main":
+
+    def main(self, check):
+        if check == "main":
             try:
                 if self.Instance_root.state() == "normal":
                     self.Instance_root.focus()
-            except:
-                self.Instance_root=Toplevel(self.mainwindow)
+            except Exception as e:
+                self.Instance_root = Toplevel(self.mainwindow)
                 self.Instance_root.geometry("1280x720")
                 self.Instance_root.title("GUI")
-                self.Instance_root.protocol("WM_DELETE_WINDOW", self.close_window)
-                self.Instance_root.minsize(768,480)
-                self.newFrame=Frame(self.Instance_root)
+                self.Instance_root.protocol(
+                    "WM_DELETE_WINDOW", self.close_window)
+                self.Instance_root.minsize(768, 480)
+                self.newFrame = Frame(self.Instance_root)
                 self.newFrame.pack()
-                self.drop = OptionMenu(self.Instance_root , foldername , *self.options)
+                self.drop = OptionMenu(
+                    self.Instance_root, foldername, *self.options)
                 self.drop.pack(anchor=NW)
                 self.myprint([foldername.get()])
                 self.mymenu()
-        elif check.get()=="settings":
+        elif check == "settings":
             self.settings()
         else:
             try:
@@ -177,61 +219,72 @@ class gui(threading.Thread):
             except:
                 pass
             self.Instance_root.destroy()
+
     def mymenu(self):
-        self.mymenubar=Menu(self.Instance_root)
-        self.mymenuoptions=Menu(self.mymenubar)
-        self.mymenubar.add_cascade(label="menu",menu=self.mymenuoptions)
-        self.mymenuoptions.add_command(label="settings",command=self.settings)
+        self.mymenubar = Menu(self.Instance_root)
+        self.mymenuoptions = Menu(self.mymenubar)
+        self.mymenubar.add_cascade(label="menu", menu=self.mymenuoptions)
+        self.mymenuoptions.add_command(label="settings", command=self.settings)
         self.Instance_root.config(menu=self.mymenubar)
+
     def folderasign(self):
         global functionkeys
-        i=1
+        i = 1
         for dir in self.mydirs:
-            if i<=12 and functionkeys["f"+str(i)]=="None":
-                functionkeys["f"+str(i)]=dir
-            i+=1
-    def pushtotalkkeychange(self,textvar):
-        global pushtotalkkey,pushtotalk
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\push to talk key",str(textvar.get()).lower())
-        pushtotalkkey=str(textvar.get()).lower()
+            if i <= 12 and functionkeys["f"+str(i)] == "None":
+                functionkeys["f"+str(i)] = dir
+            i += 1
+
+    def pushtotalkkeychange(self, textvar):
+        global pushtotalkkey, pushtotalk
+        registry_writer.write(
+            r"SOFTWARE\\virtual audio player\\push to talk key", str(textvar.get()).lower())
+        pushtotalkkey = str(textvar.get()).lower()
         self.pushtotalktext.set(str(textvar.get()).lower())
-        if len(pushtotalkkey)>1 or len(pushtotalkkey)<1:
-            pushtotalk=False
-        else :
-            pushtotalk=True
+        if len(pushtotalkkey) > 1 or len(pushtotalkkey) < 1:
+            pushtotalk = False
+        else:
+            pushtotalk = True
+
     def settings(self):
         try:
             if self.newWindow.state() == "normal":
                 self.newWindow.focus()
         except:
-            self.newWindow = Toplevel(self.mainwindow) 
+            self.newWindow = Toplevel(self.mainwindow)
             self.newWindow.title("Settings")
-            self.newWindow.minsize(400,400)
+            self.newWindow.minsize(400, 400)
             self.newWindow.geometry("400x400")
-            Checkbutton(self.newWindow,text="Use Overlay ?",variable=self.overlayvar ,onvalue=True,offvalue=False).pack()
-            Button(self.newWindow,command=self.savelockbutton,textvariable=lockcursorkey).pack()
-            self.systraycheckbox=Checkbutton(self.newWindow,text="On Exit Minimize to System tray ?",variable=self.rootsystrayvar ,onvalue=True,offvalue=False,command=self.mysystemtray).pack()
+            Checkbutton(self.newWindow, text="Use Overlay ?",
+                        variable=self.overlayvar, onvalue=True, offvalue=False).pack()
+            self.systraycheckbox = Checkbutton(self.newWindow, text="On Exit Minimize to System tray ?",
+                                               variable=self.rootsystrayvar, onvalue=True, offvalue=False, command=self.mysystemtray).pack()
             self.toggle_button(self.newWindow)
             self.devices()
-    def savelockbutton(self):
-        lockcursorkey.set(keycode_listner.get_button_str())
-    def myoverlay(self,status):
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\overlay",str(status.get()))
-        if status.get()==True:
+
+    def myoverlay(self, status):
+        registry_writer.write(
+            r"SOFTWARE\\virtual audio player\\overlay", str(status.get()))
+        if status.get() == True:
             self.mycreateoverlay()
         else:
             self.destroyoverlay()
+
     def mysystemtray(self):
-        registry_writer.write(r"SOFTWARE\\virtual audio player\\use systray",str(self.rootsystrayvar.get()))
-        if self.rootsystrayvar.get()==True:
-            if self.systraythread.is_alive()==False:
-                self.systraythread = mysystray.mytray(self.windowvar,self.overlayvar)
+        registry_writer.write(
+            r"SOFTWARE\\virtual audio player\\use systray", str(self.rootsystrayvar.get()))
+        if self.rootsystrayvar.get() == True:
+            if self.systraythread.is_alive() == False:
+                self.systraythread = mysystray.mytray(
+                    self.windowvar, self.overlayvar)
                 self.systraythread.start()
-        else :
+        else:
             self.systraythread.stop()
             while self.systraythread.is_alive():
                 sleep(0.1)
                 self.systraythread.stop()
+            self.main("main")
+
     def mycreateoverlay(self):
         try:
             if self.overlaywindow.state() == "normal":
@@ -242,20 +295,35 @@ class gui(threading.Thread):
             self.overlaywindow.attributes("-transparentcolor", "red")
             self.overlaywindow.update_idletasks()
             self.overlaywindow.lift()
-            self.overlayframe=Frame(self.overlaywindow,bg="red",borderwidth=10,highlightthickness=0)
-            self.overlayframe.pack(anchor=CENTER,ipady=self.mainwindow.winfo_screenheight(),ipadx=self.mainwindow.winfo_screenwidth())
-            l=Label(self.overlayframe, textvariable=foldername)
+            self.overlayframe = Frame(
+                self.overlaywindow, bg="red", borderwidth=10, highlightthickness=0)
+            self.overlayframe.pack(anchor=CENTER, ipady=self.mainwindow.winfo_screenheight(
+            ), ipadx=self.mainwindow.winfo_screenwidth())
+            l = Label(self.overlayframe, textvariable=foldername)
             l.pack(anchor=NW)
+            hwnd = l.winfo_id()  # getting hwnd with Tkinter windows
+            lExStyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+            lExStyle |=  win32con.WS_EX_LAYERED 
+            win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE , lExStyle )
+            win32gui.SetLayeredWindowAttributes(hwnd, 0, 255, win32con.LWA_ALPHA)
+            l.lift()
+            # hwnd = win32gui.FindWindow(None, "Your window title")
             self.mylist()
             self.overlaywindow.wm_attributes("-topmost", True)
-            self.overlaywindow.config(cursor='none')
+            # self.overlaywindow.config(cursor='none')
             self.overlaywindow.overrideredirect(1)
+
     def mylist(self):
-        try :
+        try:
             self.l1.destroy()
         except:
             pass
-        self.l1=Listbox(self.overlayframe,width=10,height=9)
+        self.l1 = Listbox(self.overlayframe, width=10, height=9)
+        hwnd = self.l1.winfo_id()  # getting hwnd with Tkinter windows
+        lExStyle = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+        lExStyle |=  win32con.WS_EX_LAYERED
+        win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE , lExStyle )
+        win32gui.SetLayeredWindowAttributes(hwnd, 0, 255, win32con.LWA_ALPHA)
         b=[]
         for i in buttons:
             temp=i[:-4]
@@ -297,7 +365,7 @@ class gui(threading.Thread):
         virtualframe=Frame(self.newWindow)
         actualframe=Frame(self.newWindow)
         Label(virtualframe, text="Virtual driver").pack()
-        Label(actualframe, text="Actual driver").pack()
+        Label(actualframe, text="Physical driver").pack()
         text=Entry(self.newWindow ,textvariable=self.pushtotalktext)
         text.pack()
         OptionMenu(virtualframe , self.window2option_playback , *self.playbackdevices ,command=self.playback).pack()
@@ -446,30 +514,14 @@ class gui(threading.Thread):
                     if  playervar=="pygame":
                         playerthread=player.player(dir_name,playback_device,pushtotalkkey,pushtotalk)
                     else:
-                        playerthread=player.player(dir_name,9,pushtotalkkey,pushtotalk)
+                        playerthread=player.player(dir_name,int(playback_device_id),pushtotalkkey,pushtotalk)
                     playerthread.start()
-class cursor_lock(threading.Thread):
-    def __init__(self):
-        super().__init__()
-        self.running=True
-    def run(self):
-        while self.running:
-            rootwindow.event_generate('<Motion>', warp=True, x=rootwindow.winfo_screenwidth()/2, y=rootwindow.winfo_screenheight()/2)
-lockcursor=cursor_lock()
 class mylistner(threading.Thread):
     def __init__(self):
         super().__init__()
         self.locked=False
     def on_press(self,key):
-        global playerthread,actualmiclisten,lockcursorkey,rootwindow,lockcursor
-        if lockcursorkey.get()==keycode_listner.getstr(key):
-            if self.locked==True:
-                lockcursor.running=False
-                self.locked=False
-            else:
-                lockcursor=cursor_lock()
-                lockcursor.start()
-                self.locked=True
+        global playerthread,actualmiclisten
         if playerthread.is_alive()==False:
             if actualmiclisten.is_alive()==False:
                 if hasattr(key,'char'):
@@ -551,21 +603,64 @@ class mylistner(threading.Thread):
     def run(self):
         with Listener(on_press=self.on_press,on_release=self.on_release) as listener:
             listener.join()
+import socket
+import json
+class myserver(threading.Thread):
+    def __init__(self):
+        super().__init__()
+        self.s = socket.socket()
+        self.s.bind(('0.0.0.0', 8090 ))
+        self.s.listen(0)
+        self.content=""
+        print("Listening")
+    def run(self):
+        while True:
+            client, addr = self.s.accept()
+            data = json.dumps(buttons)
+            threading.Thread(target = self.client, args = (client,addr,data, )).start()
+    def client(self,client:socket.socket,addr:tuple,message):
+        send=False
+        print("Connected to")
+        print(*addr,sep="")
+        recv_t=threading.Thread(target = self.client_recv, args = (client, ))
+        while True:
+            try:
+                client.send(bytes("Connected",encoding="utf-8"))
+            except Exception as e:
+                break
+            if send:
+                self.client_send(client,message)
+                send=False
+            # if recv_t.is_alive()==False:
+            #     recv_t=threading.Thread(target = self.client_recv, args = (client, ))
+            #     recv_t.start()
+        s=""
+        for i in addr:
+            s+=str(addr)
+        print("Closing connection to "+s)
+        client.close()
+    def client_send(self,client,message):
+            client.sendall(bytes(message,encoding="utf-8"))
+            print(message)
+    def client_recv(self,client):
+        self.content = client.recv(32)
+
 class main(threading.Thread):
 
     def __init__(self):
         super().__init__()
         self.mylistner1=mylistner()
         self.mylistner1.start()
+        self.server=myserver()
 
     def run(self):
-
+        if self.server.is_alive()==False:
+            self.server.start()
         if self.mylistner1.is_alive()==False:
             self.mylistner1=mylistner()
             self.mylistner1.start()
         sleep(1)
         self.run()
-
 mainthread=main()
 mainthread.start()
 threadgui=gui(player=playervar)
