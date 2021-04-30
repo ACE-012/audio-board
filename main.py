@@ -7,11 +7,10 @@ import tkinter.messagebox
 import sounddevice
 import registry_writer
 import list_of_devices
-import actual_mic_listner
+# import actual_mic_listner
 from time import *
 from pynput.keyboard import Key, Listener
 import mysystray
-import keycode_listner
 import win32gui
 import win32con
 buttons = []
@@ -96,22 +95,18 @@ else:
         r"SOFTWARE\\virtual audio player\\overlay")
     systrayvar = registry_writer.read(
         r"SOFTWARE\\virtual audio player\\use systray")
-if registry_writer.read(r"SOFTWARE\\virtual audio player\\player") == "pygame":
-    import player_pygame as player
-    playervar = "pygame"
-else:
-    import player_pyaudio as player
-    playervar = "pyaudio"
+import player
+playervar = registry_writer.read(r"SOFTWARE\\virtual audio player\\player")
 if playervar == "pygame":
-    playerthread = player.player("none", "none")
+    playerthread = player.player_pygame("none", "none")
 else:
-    playerthread = player.player("none", 20)
+    playerthread = player.player_pyaudio("none", 20)
 if len(pushtotalkkey) > 1 or len(pushtotalkkey) < 1:
     pushtotalk = False
 else:
     pushtotalk = True
 selflisten = self_listner.listen(rec_device_id, actual_playback_device_id)
-actualmiclisten = actual_mic_listner.listen(
+actualmiclisten = self_listner.listen(
     actual_rec_device_id, playback_device_id)
 
 
@@ -186,12 +181,6 @@ class gui(threading.Thread):
             self.mysystemtray()
         self.windowvar.set("main")
         self.mainwindow.mainloop()
-
-    def lockcursorvar(self, sv):
-        registry_writer.write(
-            r"SOFTWARE\\virtual audio player\\use mouse lock", sv.get())
-        global lockcursorkey
-
     def main(self, check):
         if check == "main":
             try:
@@ -211,6 +200,7 @@ class gui(threading.Thread):
                 self.drop.pack(anchor=NW)
                 self.myprint([foldername.get()])
                 self.mymenu()
+                self.Instance_root.focus()
         elif check == "settings":
             self.settings()
         else:
@@ -306,11 +296,8 @@ class gui(threading.Thread):
             lExStyle |=  win32con.WS_EX_LAYERED 
             win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE , lExStyle )
             win32gui.SetLayeredWindowAttributes(hwnd, 0, 255, win32con.LWA_ALPHA)
-            l.lift()
-            # hwnd = win32gui.FindWindow(None, "Your window title")
             self.mylist()
             self.overlaywindow.wm_attributes("-topmost", True)
-            # self.overlaywindow.config(cursor='none')
             self.overlaywindow.overrideredirect(1)
 
     def mylist(self):
@@ -506,15 +493,15 @@ class gui(threading.Thread):
     def play(self,dir_name):
         global playerthread,secondplay,firstplay
         secondplay=int(time()*1000.0)
-        if secondplay-firstplay >=350:
+        if secondplay-firstplay >=100:
             firstplay=secondplay
             if pushtotalkpressed==False:
                     if playerthread.is_alive():
                         playerthread.stop()
                     if  playervar=="pygame":
-                        playerthread=player.player(dir_name,playback_device,pushtotalkkey,pushtotalk)
+                        playerthread=player.player_pygame(dir_name,playback_device,pushtotalkkey,pushtotalk)
                     else:
-                        playerthread=player.player(dir_name,int(playback_device_id),pushtotalkkey,pushtotalk)
+                        playerthread=player.player_pyaudio(dir_name,int(playback_device_id),pushtotalkkey,pushtotalk)
                     playerthread.start()
 class mylistner(threading.Thread):
     def __init__(self):
@@ -526,8 +513,9 @@ class mylistner(threading.Thread):
             if actualmiclisten.is_alive()==False:
                 if hasattr(key,'char'):
                     if key.char==pushtotalkkey[0]:
+                            playerthread.stop()
                             selflisten.running=False
-                            actualmiclisten=actual_mic_listner.listen(actual_rec_device_id,playback_device_id)
+                            actualmiclisten=self_listner.listen(actual_rec_device_id,playback_device_id)
                             actualmiclisten.start()
                             global pushtotalkpressed
                             pushtotalkpressed=True
@@ -535,15 +523,15 @@ class mylistner(threading.Thread):
                 global firstplay,secondplay
                 if key.vk-97<len(buttons) and key.vk-97!=-1:
                     secondplay=int(time()*1000.0)
-                    if secondplay-firstplay >=350:
+                    if secondplay-firstplay >=100:
                         firstplay=secondplay
                         if pushtotalkpressed==False:
                             if playerthread.is_alive():
                                 playerthread.stop()
                             if playervar=="pygame":
-                                playerthread=player.player(buttons[key.vk-97],playback_device,pushtotalkkey,pushtotalk)
+                                playerthread=player.player_pygame(buttons[key.vk-97],playback_device,pushtotalkkey,pushtotalk)
                             else:
-                                playerthread=player.player(buttons[key.vk-97],int(playback_device_id),pushtotalkkey,pushtotalk)
+                                playerthread=player.player_pyaudio(buttons[key.vk-97],int(playback_device_id),pushtotalkkey,pushtotalk)
                             playerthread.start()
                 if key.vk-96==0:
                     playerthread.stop()
@@ -584,8 +572,6 @@ class mylistner(threading.Thread):
             elif key==key.f12:
                 if functionkeys["f12"]!="None":
                     foldername.set(functionkeys["f12"])
-        #     if key==key.num_lock:
-        #         os._exit(0)
     def on_release(self,key):
         global selflisten,actualmiclisten,pushtotalkpressed
         if playerthread.is_alive()==False:

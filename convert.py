@@ -1,4 +1,3 @@
-from os import path
 import os
 import threading
 from pydub import AudioSegment
