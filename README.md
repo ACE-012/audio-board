@@ -1,3 +1,4 @@
+[![Github All Releases](https://img.shields.io/github/downloads/ACE-012/audio-board/total.svg)]()
 # Manual
 
 1)To Use this first you need to install a virtual audio driver <https://vb-audio.com/Cable/> This is the one I used and recommend
