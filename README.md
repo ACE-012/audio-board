@@ -2,8 +2,7 @@
 
 # Manual
 
-1)To Use this first you need to install a virtual audio driver <https://vb-audio.com/Cable/> This is the one I used and recommend
-
+1)To Use this first you need to install a virtual audio driver for ex <https://vb-audio.com/Cable/> 
 2)to add new file you can just create a new folder and add it their it only supports .mp3 ,.wav and .ogg
 
 3)it reads upto 9 files in a folder
